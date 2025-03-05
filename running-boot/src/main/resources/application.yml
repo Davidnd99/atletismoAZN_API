@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: RunningApp
+  datasource:
+    url: jdbc:mysql://localhost:3306/running_app_db
+    username: root
+    password: ppaarrkkee12
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+      hibernate:
+          ddl-auto: update
+      show-sql: true
+      properties:
+          hibernate:
+          dialect: org.hibernate.dialect.MySQL5Dialect
+          format_sql: true
+          use_sql_comments: true
+
+  swagger:
+    enabled: true
+    title: Running App API
+    description: Running App API
+    version: 1.0
+    contact:
+        name: "David"
+        email: "david.nieto456@alu.uhu.es"
+    jackson:
+      date-format: "yyyy-MM-dd"
+    servers:
+        - url: "/"
+          description: "Default Server"
+
+# To expose Spring Boot info actuator
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: info, health, mappings
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+    info:
+      enabled: true
+    mappings:
+      enabled: true
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /api/docs/swagger.json
+  swagger-ui:
+    path: /swagger
+    enabled: ${swagger.enabled:true}
+  enable-spring-security: false
+
+swagger:
+  title: Running Service API
+  servers:
+    - url: "/"
+      description: "Default Server"
