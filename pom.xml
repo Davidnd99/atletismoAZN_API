@@ -31,6 +31,7 @@
         <minimum.covered-ratio>0.70</minimum.covered-ratio>
         <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
         <mysql-connector-java.version>8.0.33</mysql-connector-java.version>
+        <springdoc-openapi-ui.version>2.0.0</springdoc-openapi-ui.version>
     </properties>
 
     <modules>
@@ -87,6 +88,11 @@
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql-connector-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${springdoc-openapi-ui.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
