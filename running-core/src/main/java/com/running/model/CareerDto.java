@@ -16,5 +16,6 @@ public class CareerDto {
     private Double distance_km;
     private Date date;
     private String province;
-    private int type;
+    private Type type;
+    private Difficulty iddifficulty;
 }

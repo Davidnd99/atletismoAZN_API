@@ -28,5 +28,10 @@ public class Career {
     private Double distance_km;
     private Date date;
     private String province;
-    private int type;
+    @ManyToOne
+    @JoinColumn(name = "id_type", nullable = false)
+    private Type type;
+    @ManyToOne
+    @JoinColumn(name = "iddifficulty", nullable = false)
+    private Difficulty difficulty;
 }
