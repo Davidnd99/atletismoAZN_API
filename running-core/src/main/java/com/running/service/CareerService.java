@@ -41,6 +41,11 @@ public class CareerService {
         return careerRepository.save(career);
     }
 
+    public Career findById(Long id) {
+        return careerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Career not found with id: " + id));
+    }
+
     public List<Career> findAll() {
         return careerRepository.findAll();
     }

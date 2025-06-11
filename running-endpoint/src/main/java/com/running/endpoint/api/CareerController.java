@@ -28,6 +28,11 @@ public class CareerController {
         return ResponseEntity.ok(careerService.save(request));
     }
 
+    @GetMapping(value = "/getById", produces = "application/json")
+    public ResponseEntity<Career> getById(@RequestParam Long id) {
+        return ResponseEntity.ok(careerService.findById(id));
+    }
+
     @GetMapping(value = "/getAll", produces = "application/json")
     public ResponseEntity<List<Career>> getAllCareers() {
         return ResponseEntity.ok(careerService.findAll());
