@@ -34,6 +34,7 @@ public class CareerService {
                 .distance_km(request.getDistance_km())
                 .date(request.getDate())
                 .province(request.getProvince())
+                .url(request.getUrl())
                 .difficulty(difficulty)    // relación JPA con objeto completo
                 .type(type)                // relación JPA con objeto completo
                 .build();

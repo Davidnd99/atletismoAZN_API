@@ -1,9 +1,11 @@
 package com.running.model;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -14,8 +16,10 @@ public class CareerDto {
     private String name;
     private String place;
     private Double distance_km;
-    private Date date;
+    private LocalDateTime date;
     private String province;
     private Type type;
     private Difficulty iddifficulty;
+    @Column(name = "url")
+    private String url;
 }

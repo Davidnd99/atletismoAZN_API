@@ -1,6 +1,8 @@
 package com.running.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.running.model.TrainingPlan;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,27 +12,23 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Entity
-@Table(name = "user")
+@Table(name = "club")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Club {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String email;
     private String name;
-    private String surname;
-    private String UID;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_club",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "club_id")
-    )
+    @OneToMany(mappedBy = "club")
     @JsonManagedReference
-    private List<Club> clubs;
+    private List<TrainingPlan> trainingPlans;
+
+    @ManyToMany(mappedBy = "clubs")
+    @JsonBackReference
+    private List<User> users;
 }

@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -26,8 +27,10 @@ public class Career {
     private String name;
     private String place;
     private Double distance_km;
-    private Date date;
+    private LocalDateTime date;
     private String province;
+    @Column(name = "url")
+    private String url;
     @ManyToOne
     @JoinColumn(name = "id_type", nullable = false)
     private Type type;
