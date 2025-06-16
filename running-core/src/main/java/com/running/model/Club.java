@@ -23,6 +23,8 @@ public class Club {
     private Long id;
 
     private String name;
+    private String province;
+    private String photo;
 
     @OneToMany(mappedBy = "club")
     @JsonManagedReference
