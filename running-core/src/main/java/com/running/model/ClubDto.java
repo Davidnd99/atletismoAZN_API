@@ -14,4 +14,8 @@ public class ClubDto {
     private String name;
     private String province;
     private String photo;
+    private String place;
+    private Integer members;
+    private boolean joined;
+    private String contact;
 }

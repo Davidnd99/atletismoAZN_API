@@ -16,14 +16,24 @@ public class ClubController {
 
     private final ClubService clubService;
 
-    @GetMapping
-    public ResponseEntity<List<ClubDto>> getClubs(@RequestParam(required = false) String provincia) {
-        return ResponseEntity.ok(clubService.getClubs(provincia));
+    // Endpoint 1: Obtener todos los clubes (con o sin filtro por provincia)
+    @GetMapping("/all")
+    public ResponseEntity<List<ClubDto>> getAllClubs(
+            @RequestParam(required = false) String provincia) {
+        return ResponseEntity.ok(clubService.getAllClubs(provincia));
     }
 
+    // Endpoint 2: Obtener los clubes del usuario
+    @GetMapping("/user")
+    public ResponseEntity<List<ClubDto>> getClubsByUser(@RequestParam String uid) {
+        return ResponseEntity.ok(clubService.getClubsByUser(uid));
+    }
+
+    // Endpoint 3: Obtener detalles de un club por ID (opcionalmente con uid)
     @GetMapping("/{id}")
-    public ResponseEntity<ClubDto> getClubById(@PathVariable Long id) {
-        return ResponseEntity.ok(clubService.getClubById(id));
+    public ResponseEntity<ClubDto> getClubById(
+            @PathVariable Long id,
+            @RequestParam(required = false) String uid) {
+        return ResponseEntity.ok(clubService.getClubById(id, uid));
     }
 }
-

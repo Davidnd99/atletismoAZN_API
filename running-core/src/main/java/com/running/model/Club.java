@@ -25,6 +25,9 @@ public class Club {
     private String name;
     private String province;
     private String photo;
+    private String place;
+    private Integer members;
+    private String contact;
 
     @OneToMany(mappedBy = "club")
     @JsonManagedReference

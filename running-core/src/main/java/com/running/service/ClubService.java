@@ -2,11 +2,14 @@ package com.running.service;
 
 import com.running.model.Club;
 import com.running.model.ClubDto;
+import com.running.model.User;
 import com.running.repository.ClubRepository;
+import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -14,36 +17,71 @@ import java.util.stream.Collectors;
 public class ClubService {
 
     private final ClubRepository clubRepository;
+    private final UserRepository userRepository;
 
-    public List<ClubDto> getClubs(String provincia) {
-        List<Club> clubs;
+    // Obtener todos los clubs (con o sin filtro por provincia)
+    public List<ClubDto> getAllClubs(String provincia) {
+        List<Club> clubs = (provincia != null && !provincia.isBlank())
+                ? clubRepository.findByProvinceIgnoreCaseAndNameNotIgnoreCase(provincia, "default")
+                : clubRepository.findByNameNotIgnoreCase("default");
 
-        if (provincia != null && !provincia.isEmpty()) {
-            clubs = clubRepository.findByProvinceIgnoreCase(provincia);
-        } else {
-            clubs = clubRepository.findAll();
+        return clubs.stream()
+                .filter(club -> !"default".equalsIgnoreCase(club.getName()))
+                .map(club -> new ClubDto(
+                        club.getId(),
+                        club.getName(),
+                        club.getProvince(),
+                        club.getPhoto(),
+                        club.getPlace(),
+                        club.getMembers(),
+                        false,
+                        club.getContact()))
+                .collect(Collectors.toList());
+    }
+
+    // Obtener los clubs a los que pertenece un usuario
+    public List<ClubDto> getClubsByUser(String uid) {
+        Optional<User> userOpt = userRepository.findByUID(uid);
+        if (userOpt.isEmpty()) return List.of();
+
+        User user = userOpt.get();
+
+        return user.getClubs().stream()
+                .filter(club -> !"default".equalsIgnoreCase(club.getName()))
+                .map(club -> new ClubDto(
+                        club.getId(),
+                        club.getName(),
+                        club.getProvince(),
+                        club.getPhoto(),
+                        club.getPlace(),
+                        club.getMembers(),
+                        true,
+                        club.getContact()))
+                .collect(Collectors.toList());
+    }
+
+    // Obtener un club por ID y marcar si el usuario pertenece o no
+    public ClubDto getClubById(Long id, String uid) {
+        Club club = clubRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Club no encontrado"));
+
+        boolean joined = false;
+        if (uid != null) {
+            Optional<User> userOpt = userRepository.findByUID(uid);
+            if (userOpt.isPresent()) {
+                joined = userOpt.get().getClubs().contains(club);
+            }
         }
 
-        // Filtramos el club con ID = 1 (default)
-        return clubs.stream()
-                .filter(club -> club.getId() != 1L)
-                .map(club -> new ClubDto(club.getId(), club.getName(), club.getProvince(), club.getPhoto()))
-                .toList();
+        return new ClubDto(
+                club.getId(),
+                club.getName(),
+                club.getProvince(),
+                club.getPhoto(),
+                club.getPlace(),
+                club.getMembers(),
+                joined,
+                club.getContact());
     }
 
-
-    public ClubDto getClubById(Long id) {
-        Club club = clubRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Club not found"));
-        return toDto(club);
-    }
-
-    private ClubDto toDto(Club club) {
-        return ClubDto.builder()
-                .id(club.getId())
-                .name(club.getName())
-                .province(club.getProvince())
-                .photo(club.getPhoto())
-                .build();
-    }
 }
