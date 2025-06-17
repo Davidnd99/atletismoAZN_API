@@ -60,7 +60,8 @@ public class UserService {
     // ✅ Unirse a un nuevo club
     @Transactional
     public void joinClub(String uid, Long newClubId) {
-        User user = findByUID(uid);
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         Club newClub = clubRepository.findById(newClubId)
                 .orElseThrow(() -> new RuntimeException("Club not found"));
 
@@ -72,6 +73,9 @@ public class UserService {
             user.getClubs().add(newClub);
         }
 
+        newClub.setMembers(newClub.getMembers() + 1);
+
+        clubRepository.save(newClub);
         userRepository.save(user);
     }
 
@@ -82,15 +86,27 @@ public class UserService {
         Club clubToRemove = clubRepository.findById(clubId)
                 .orElseThrow(() -> new RuntimeException("Club not found"));
 
-        user.getClubs().remove(clubToRemove);
+        if (user.getClubs().contains(clubToRemove)) {
+            user.getClubs().remove(clubToRemove);
 
-        // Si se queda sin clubes, volver al default
-        if (user.getClubs().isEmpty()) {
-            Club defaultClub = clubRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Default club not found"));
-            user.getClubs().add(defaultClub);
+            // Decrementar miembros (evitar que baje de 0)
+            if (clubToRemove.getMembers() != null && clubToRemove.getMembers() > 0) {
+                clubToRemove.setMembers(clubToRemove.getMembers() - 1);
+            }
+
+            // Si se queda sin clubes, añadir club por defecto
+            if (user.getClubs().isEmpty()) {
+                Club defaultClub = clubRepository.findById(1L)
+                        .orElseThrow(() -> new RuntimeException("Default club not found"));
+                user.getClubs().add(defaultClub);
+            }
+
+            // Guardar cambios
+            userRepository.save(user);
+            clubRepository.save(clubToRemove); // guardar el decremento
         }
-
-        userRepository.save(user);
     }
+
+
+
 }
