@@ -3,13 +3,16 @@ package com.running.service;
 import com.running.model.Club;
 import com.running.model.User;
 import com.running.model.UserDto;
+import com.running.model.UserRace;
 import com.running.repository.ClubRepository;
+import com.running.repository.UserRaceRepository;
 import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ClubRepository clubRepository;
+    private final UserRaceRepository userRaceRepository;
 
     public User saveFromDto(UserDto dto) {
         Optional<User> existingUserOpt = userRepository.findByEmail(dto.getEmail());
@@ -46,6 +50,20 @@ public class UserService {
 
         return userRepository.save(newUser);
     }
+
+    public void deleteByUID(String uid) {
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("User not found with UID: " + uid));
+
+        // Eliminar relaciones con clubes
+        user.getClubs().clear();
+
+        // Eliminar inscripciones del usuario en carreras
+        userRaceRepository.deleteAll(userRaceRepository.findByUser_UID(user.getUID()));
+
+        userRepository.delete(user);
+    }
+
 
 
     public User findByUID(String uid) {

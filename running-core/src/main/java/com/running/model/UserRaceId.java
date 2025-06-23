@@ -29,6 +29,4 @@ public class UserRaceId implements Serializable {
         return Objects.hash(user, race);
     }
 
-
-
 }

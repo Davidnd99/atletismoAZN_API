@@ -39,8 +39,6 @@ public class UserController {
         return ResponseEntity.ok(savedUser);
     }
 
-
-
     @GetMapping("/findByUID/{uid}")
     public ResponseEntity<User> findByUID(@PathVariable String uid) {
         return ResponseEntity.ok(userService.findByUID(uid));
@@ -49,5 +47,11 @@ public class UserController {
     @GetMapping("/findAll")
     public ResponseEntity<List<User>> findAll() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @DeleteMapping("/delete/{uid}")
+    public ResponseEntity<String> deleteUser(@PathVariable String uid) {
+        userService.deleteByUID(uid);
+        return ResponseEntity.ok("User deleted successfully");
     }
 }
