@@ -23,8 +23,8 @@ public class TrainingPlanController {
     }
 
     @GetMapping("/by-club")
-    public ResponseEntity<List<TrainingPlan>> getByClub(@RequestParam Long idClub, @RequestParam String uid) {
-        return ResponseEntity.ok(trainingPlanService.findByClubId(idClub, uid));
+    public ResponseEntity<List<TrainingPlan>> getByClub(@RequestParam Long idClub) {
+        return ResponseEntity.ok(trainingPlanService.findByClubId(idClub));
     }
 
     @GetMapping("/all")

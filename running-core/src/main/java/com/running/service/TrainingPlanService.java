@@ -24,38 +24,18 @@ public class TrainingPlanService {
         Club club = clubRepository.findById(dto.getIdClub())
                 .orElseThrow(() -> new RuntimeException("Club not found"));
 
-        User user = userRepository.findByUID(dto.getUidUsuario())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        boolean perteneceAlClub = user.getClubs().stream()
-                .anyMatch(c -> c.getId().equals(club.getId()));
-
-        if (!perteneceAlClub) {
-            throw new RuntimeException("User does not belong to the club");
-        }
-
         TrainingPlan plan = TrainingPlan.builder()
                 .club(club)
                 .name(dto.getName())
-                .pathPdf(dto.getPathPdf())
+                .contentJson(dto.getContentJson())
                 .build();
 
         return trainingPlanRepository.save(plan);
     }
 
-    public List<TrainingPlan> findByClubId(Long idClub, String uidUsuario) {
+    public List<TrainingPlan> findByClubId(Long idClub) {
         Club club = clubRepository.findById(idClub)
                 .orElseThrow(() -> new RuntimeException("Club not found"));
-
-        User user = userRepository.findByUID(uidUsuario)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        boolean perteneceAlClub = user.getClubs().stream()
-                .anyMatch(c -> c.getId().equals(club.getId()));
-
-        if (!perteneceAlClub) {
-            throw new RuntimeException("Access denied to this club's training plans");
-        }
 
         return trainingPlanRepository.findByClub(club);
     }

@@ -21,5 +21,7 @@ public class TrainingPlan {
     private Club club;
 
     private String name;
-    private String pathPdf;
+
+    @Column(name = "content_json", columnDefinition = "json", nullable = false)
+    private String contentJson;
 }
