@@ -50,5 +50,12 @@ public class UserRaceController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/list-by-status/{uid}")
+    public ResponseEntity<List<UserRaceResponseDto>> getUserRacesByStatus(
+            @PathVariable String uid,
+            @RequestParam String status) {
+        return ResponseEntity.ok(userRaceService.getUserRacesByStatus(uid, status));
+    }
+
 }
 

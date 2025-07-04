@@ -12,6 +12,6 @@ import java.util.Optional;
 public interface UserRaceRepository extends JpaRepository<UserRace, UserRaceId> {
     List<UserRace> findByUser_UID(String uid);
     Optional<UserRace> findByUserIdAndRaceId(Long userId, Long raceId);
-
+    List<UserRace> findByUserIdAndStatus(Long userId, String status);
 }
 

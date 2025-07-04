@@ -85,6 +85,22 @@ public class UserRaceService {
         return inscription.map(UserRace::getStatus).orElse(null);
     }
 
+    public List<UserRaceResponseDto> getUserRacesByStatus(String uid, String status) {
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        List<UserRace> userRaces = userRaceRepository.findByUserIdAndStatus(user.getId(), status);
+
+        return userRaces.stream().map(ur -> UserRaceResponseDto.builder()
+                .raceId(ur.getRace().getId())
+                .raceName(ur.getRace().getName())
+                .place(ur.getRace().getPlace())
+                .distanceKm(ur.getRace().getDistance_km())
+                .raceDate(ur.getRace().getDate())
+                .registrationDate(ur.getRegistrationDate())
+                .status(ur.getStatus())
+                .build()
+        ).toList();
+    }
 }
 
