@@ -99,6 +99,7 @@ public class UserRaceService {
                 .raceDate(ur.getRace().getDate())
                 .registrationDate(ur.getRegistrationDate())
                 .status(ur.getStatus())
+                .photo(ur.getRace().getPhoto())
                 .build()
         ).toList();
     }

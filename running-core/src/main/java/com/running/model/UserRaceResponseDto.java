@@ -17,5 +17,6 @@ public class UserRaceResponseDto {
     private LocalDateTime raceDate;
     private LocalDateTime registrationDate;
     private String status;
+    private String photo;
 }
 
