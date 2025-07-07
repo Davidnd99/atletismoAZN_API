@@ -1,5 +1,7 @@
 package com.running.repository;
 
+import com.running.model.Career;
+import com.running.model.User;
 import com.running.model.UserRace;
 import com.running.model.UserRaceId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,5 +15,6 @@ public interface UserRaceRepository extends JpaRepository<UserRace, UserRaceId> 
     List<UserRace> findByUser_UID(String uid);
     Optional<UserRace> findByUserIdAndRaceId(Long userId, Long raceId);
     List<UserRace> findByUserIdAndStatus(Long userId, String status);
+    Optional<UserRace> findByUserAndRace(User user, Career race);
 }
 

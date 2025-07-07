@@ -1,5 +1,6 @@
 package com.running.endpoint.api;
 
+import com.running.model.MarcaDto;
 import com.running.model.UserRace;
 import com.running.model.UserRaceResponseDto;
 import com.running.service.UserRaceService;
@@ -57,5 +58,16 @@ public class UserRaceController {
         return ResponseEntity.ok(userRaceService.getUserRacesByStatus(uid, status));
     }
 
+    @PutMapping("/{uid}/registrar-marca")
+    public ResponseEntity<String> registrarMarca(@PathVariable String uid, @RequestBody MarcaDto dto) {
+        userRaceService.registrarMarca(uid, dto);
+        return ResponseEntity.ok("Marca registrada correctamente");
+    }
+
+    @GetMapping("/{uid}/marcas")
+    public ResponseEntity<List<UserRace>> getMarcas(@PathVariable String uid) {
+        List<UserRace> carreras = userRaceService.obtenerMarcas(uid);
+        return ResponseEntity.ok(carreras);
+    }
 }
 
