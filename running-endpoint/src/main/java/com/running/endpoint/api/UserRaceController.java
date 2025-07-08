@@ -58,16 +58,40 @@ public class UserRaceController {
         return ResponseEntity.ok(userRaceService.getUserRacesByStatus(uid, status));
     }
 
-    @PutMapping("/{uid}/registrar-marca")
-    public ResponseEntity<String> registrarMarca(@PathVariable String uid, @RequestBody MarcaDto dto) {
-        userRaceService.registrarMarca(uid, dto);
-        return ResponseEntity.ok("Marca registrada correctamente");
+    // 1) Listar todas las marcas del usuario
+    @GetMapping("/{uid}/marcas")
+    public ResponseEntity<List<MarcaDto>> getMarcas(@PathVariable String uid) {
+        List<MarcaDto> marcas = userRaceService.obtenerMarcas(uid);
+        return ResponseEntity.ok(marcas);
     }
 
-    @GetMapping("/{uid}/marcas")
-    public ResponseEntity<List<UserRace>> getMarcas(@PathVariable String uid) {
-        List<UserRace> carreras = userRaceService.obtenerMarcas(uid);
-        return ResponseEntity.ok(carreras);
+    // 2) Obtener la marca de una carrera concreta
+    @GetMapping("/{uid}/marcas/{raceId}")
+    public ResponseEntity<MarcaDto> getMarcaPorCarrera(
+            @PathVariable String uid,
+            @PathVariable Long raceId) {
+        MarcaDto marca = userRaceService.obtenerMarcaPorCarrera(uid, raceId);
+        return ResponseEntity.ok(marca);
     }
+
+    // 3) Registrar o actualizar una marca
+    @PutMapping("/{uid}/marcas/{raceId}")
+    public ResponseEntity<Void> actualizarMarca(
+            @PathVariable String uid,
+            @PathVariable Long raceId,
+            @RequestBody MarcaDto dto) {
+        userRaceService.actualizarMarca(uid, raceId, dto);
+        return ResponseEntity.ok().build();
+    }
+
+    // 4) Eliminar una marca
+    @DeleteMapping("/{uid}/marcas/{raceId}")
+    public ResponseEntity<Void> eliminarMarca(
+            @PathVariable String uid,
+            @PathVariable Long raceId) {
+        userRaceService.eliminarMarca(uid, raceId);
+        return ResponseEntity.ok().build();
+    }
+
 }
 

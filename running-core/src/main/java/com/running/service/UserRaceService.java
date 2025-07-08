@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -107,38 +108,88 @@ public class UserRaceService {
         ).toList();
     }
 
-    public void registrarMarca(String uid, MarcaDto dto) {
-        User user = userRepository.findByUID(uid)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        Career race = careerRepository.findById(dto.getRaceId())
-                .orElseThrow(() -> new RuntimeException("Carrera no encontrada"));
-
-        UserRace userRace = userRaceRepository.findByUserAndRace(user, race)
-                .orElseThrow(() -> new RuntimeException("El usuario no está inscrito en esta carrera"));
-
-        if (!"confirmada".equalsIgnoreCase(userRace.getStatus())) {
-            throw new RuntimeException("Solo se pueden registrar marcas en carreras finalizadas");
-        }
-
-        // Parsear el tiempo de forma flexible
-        LocalTime parsedTime = parseFlexibleTime(dto.getTiempo());
-
-        userRace.setTiempo(parsedTime);
-        userRace.setPosicion(dto.getPosicion());
-        userRace.setComentarios(dto.getComentarios());
-
-        userRaceRepository.save(userRace);
-    }
 
 
-
-    public List<UserRace> obtenerMarcas(String uid) {
+    /**
+     * 1️⃣ Listar TODAS las carreras confirmadas (aunque tiempo sea null)
+     */
+    public List<MarcaDto> obtenerMarcas(String uid) {
         return userRaceRepository.findByUser_UID(uid)
                 .stream()
-                .filter(ur -> ur.getTiempo() != null) // Solo las que tienen marca registrada
-                .toList();
+                .filter(ur -> "confirmada".equalsIgnoreCase(ur.getStatus()))
+                .map(ur -> {
+                    MarcaDto dto = new MarcaDto();
+                    dto.setRaceId(ur.getRace().getId());
+                    dto.setRaceDate(ur.getRace().getDate());
+                    dto.setTiempo(ur.getTiempo() != null ? ur.getTiempo().toString() : null);
+                    dto.setPosicion(ur.getPosicion());
+                    dto.setComentarios(ur.getComentarios());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
+
+
+
+    /**
+     * 2️⃣ Obtener una marca concreta (aunque tiempo sea null)
+     */
+    public MarcaDto obtenerMarcaPorCarrera(String uid, Long raceId) {
+        UserRace ur = userRaceRepository.findByUser_UIDAndRace_Id(uid, raceId)
+                .orElseThrow(() -> new RuntimeException("No existe inscripción para esa carrera"));
+
+        if (!"confirmada".equalsIgnoreCase(ur.getStatus())) {
+            throw new RuntimeException("La carrera no está confirmada");
+        }
+
+        MarcaDto dto = new MarcaDto();
+        dto.setRaceId(ur.getRace().getId());
+        dto.setTiempo(ur.getTiempo() != null ? ur.getTiempo().toString() : null);
+        dto.setPosicion(ur.getPosicion());
+        dto.setComentarios(ur.getComentarios());
+        return dto;
+    }
+
+    /**
+     * 3️⃣ Registrar o actualizar una marca
+     */
+    @Transactional
+    public void actualizarMarca(String uid, Long raceId, MarcaDto dto) {
+        UserRace ur = userRaceRepository.findByUser_UIDAndRace_Id(uid, raceId)
+                .orElseThrow(() -> new RuntimeException("No existe inscripción para esa carrera"));
+
+        if (!"confirmada".equalsIgnoreCase(ur.getStatus())) {
+            throw new RuntimeException("Solo se pueden registrar marcas de carreras confirmadas");
+        }
+
+        LocalTime parsedTime = parseFlexibleTime(dto.getTiempo());
+
+        ur.setTiempo(parsedTime);
+        ur.setPosicion(dto.getPosicion());
+        ur.setComentarios(dto.getComentarios());
+
+        userRaceRepository.save(ur);
+    }
+
+    /**
+     * 4️⃣ Eliminar una marca (dejarla en blanco)
+     */
+    @Transactional
+    public void eliminarMarca(String uid, Long raceId) {
+        UserRace ur = userRaceRepository.findByUser_UIDAndRace_Id(uid, raceId)
+                .orElseThrow(() -> new RuntimeException("No existe inscripción para esa carrera"));
+
+        if (!"confirmada".equalsIgnoreCase(ur.getStatus())) {
+            throw new RuntimeException("Solo se pueden eliminar marcas de carreras confirmadas");
+        }
+
+        ur.setTiempo(null);
+        ur.setPosicion(null);
+        ur.setComentarios(null);
+
+        userRaceRepository.save(ur);
+    }
+
 
     private LocalTime parseFlexibleTime(String input) {
         if (input == null || input.isEmpty()) {

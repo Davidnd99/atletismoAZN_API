@@ -15,6 +15,6 @@ public interface UserRaceRepository extends JpaRepository<UserRace, UserRaceId> 
     List<UserRace> findByUser_UID(String uid);
     Optional<UserRace> findByUserIdAndRaceId(Long userId, Long raceId);
     List<UserRace> findByUserIdAndStatus(Long userId, String status);
-    Optional<UserRace> findByUserAndRace(User user, Career race);
+    Optional<UserRace> findByUser_UIDAndRace_Id(String uid, Long raceId);
 }
 
