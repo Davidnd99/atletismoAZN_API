@@ -124,6 +124,7 @@ public class UserRaceService {
                     dto.setTiempo(ur.getTiempo() != null ? ur.getTiempo().toString() : null);
                     dto.setPosicion(ur.getPosicion());
                     dto.setComentarios(ur.getComentarios());
+                    dto.setPace(ur.getPace() != null ? ur.getPace().toString() : null);
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -147,6 +148,7 @@ public class UserRaceService {
         dto.setTiempo(ur.getTiempo() != null ? ur.getTiempo().toString() : null);
         dto.setPosicion(ur.getPosicion());
         dto.setComentarios(ur.getComentarios());
+        dto.setPace(ur.getPace() != null ? ur.getPace().toString() : null);
         return dto;
     }
 
@@ -163,10 +165,12 @@ public class UserRaceService {
         }
 
         LocalTime parsedTime = parseFlexibleTime(dto.getTiempo());
+        LocalTime parsedPace = parseFlexibleTime(dto.getPace());
 
         ur.setTiempo(parsedTime);
         ur.setPosicion(dto.getPosicion());
         ur.setComentarios(dto.getComentarios());
+        ur.setPace(parsedPace);
 
         userRaceRepository.save(ur);
     }
@@ -186,6 +190,7 @@ public class UserRaceService {
         ur.setTiempo(null);
         ur.setPosicion(null);
         ur.setComentarios(null);
+        ur.setPace(null);
 
         userRaceRepository.save(ur);
     }

@@ -37,6 +37,8 @@ public class CareerService {
                 .url(request.getUrl())
                 .difficulty(difficulty)    // relación JPA con objeto completo
                 .type(type)                // relación JPA con objeto completo
+                .slope(request.getSlope())
+                .registered(request.getRegistered())
                 .build();
 
         return careerRepository.save(career);

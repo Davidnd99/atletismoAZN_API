@@ -38,5 +38,7 @@ public class UserRace {
     private Integer posicion;
 
     private String comentarios;
+
+    private LocalTime pace;
 }
 

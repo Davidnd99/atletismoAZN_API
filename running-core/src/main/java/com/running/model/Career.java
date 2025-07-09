@@ -29,6 +29,8 @@ public class Career {
     private Double distance_km;
     private LocalDateTime date;
     private String province;
+    private Integer slope;
+    private Integer registered;
     @Column(name = "url")
     private String url;
     @ManyToOne

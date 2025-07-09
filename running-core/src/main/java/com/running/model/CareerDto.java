@@ -20,6 +20,8 @@ public class CareerDto {
     private String province;
     private Type type;
     private Difficulty iddifficulty;
+    private Integer slope;
+    private Integer registered;
     @Column(name = "url")
     private String url;
 }
