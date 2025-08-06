@@ -34,6 +34,7 @@
         <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
         <mysql-connector-java.version>8.0.33</mysql-connector-java.version>
         <springdoc-openapi-ui.version>2.0.0</springdoc-openapi-ui.version>
+        <firebase-version>9.2.0</firebase-version>
     </properties>
 
 
@@ -103,6 +104,11 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-ui</artifactId>
                 <version>${springdoc-openapi-ui.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.firebase</groupId>
+                <artifactId>firebase-admin</artifactId>
+                <version>${firebase-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,20 +1,22 @@
 package com.running.service;
 
-import com.running.model.Club;
-import com.running.model.User;
-import com.running.model.UserDto;
-import com.running.model.UserRace;
+import com.running.model.*;
 import com.running.repository.ClubRepository;
+import com.running.repository.RoleRepository;
 import com.running.repository.UserRaceRepository;
 import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.FirebaseAuthException;
 
 import jakarta.transaction.Transactional;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ClubRepository clubRepository;
     private final UserRaceRepository userRaceRepository;
+    private final RoleRepository roleRepository;
 
     public User saveFromDto(UserDto dto) {
         Optional<User> existingUserOpt = userRepository.findByEmail(dto.getEmail());
@@ -125,6 +128,114 @@ public class UserService {
         }
     }
 
+    public RoleDto getUserRoleByUID(String uid) {
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        RoleDto dto = new RoleDto();
+        dto.setName(user.getRole().getName());
+        return dto;
+    }
+
+    /**
+     * Actualiza el nombre y apellido del usuario.
+     *
+     * @param uid Identificador único del usuario.
+     * @param dto Objeto que contiene el nuevo nombre y apellido.
+     * @return El usuario actualizado.
+     */
+    public User updateNameAndSurname(String uid, UserDto dto) {
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        user.setName(dto.getName());
+        user.setSurname(dto.getSurname());
+        return userRepository.save(user);
+    }
+
+    /**
+     * Obtiene una lista de todos los nombres de roles disponibles.
+     *
+     * @return Lista de nombres de roles.
+     */
+    public List<String> getAllRoleNames() {
+        return roleRepository.findAll()
+                .stream()
+                .map(Role::getName)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Guarda un nuevo usuario desde el administrador.
+     * Asigna un rol y un club por defecto.
+     *
+     * @param dto Objeto que contiene los datos del usuario.
+     * @return El usuario guardado.
+     */
+    public User saveFromAdminDto(UserDto dto) {
+        Role role = roleRepository.findByName(dto.getRole())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+        Club defaultClub = clubRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Default club not found"));
+
+        User newUser = User.builder()
+                .name(dto.getName())
+                .email(dto.getEmail())
+                .surname(dto.getSurname())
+                .UID(dto.getUid())
+                .role(role)
+                .clubs(List.of(defaultClub))
+                .build();
+
+        return userRepository.save(newUser);
+    }
 
 
+    public User createUserWithFirebase(UserDto dto) {
+        try {
+            // ✅ Usa la contraseña generada en el frontend
+            String password = dto.getPassword(); // debe estar en el DTO
+
+            UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+                    .setEmail(dto.getEmail())
+                    .setPassword(password)
+                    .setDisplayName(dto.getName() + " " + dto.getSurname());
+
+            UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
+
+            dto.setUid(userRecord.getUid());
+            return saveFromAdminDto(dto); // esta NO guarda el password
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException("Error creando usuario en Firebase: " + e.getMessage());
+        }
+    }
+
+
+    public void deleteUserWithFirebase(String uid) {
+        try {
+            // 1. Eliminar en Firebase
+            FirebaseAuth.getInstance().deleteUser(uid);
+
+            // 2. Eliminar en base de datos
+            deleteByUID(uid);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException("Error deleting user in Firebase: " + e.getMessage());
+        }
+    }
+
+    private String generateStrongPassword(int length) {
+        String lowercase = "abcdefghijklmnopqrstuvwxyz";
+        String uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String numbers = "0123456789";
+        String allChars = lowercase + uppercase + numbers;
+
+        StringBuilder password = new StringBuilder();
+        password.append(uppercase.charAt((int) (Math.random() * uppercase.length())));
+        password.append(numbers.charAt((int) (Math.random() * numbers.length())));
+        password.append(lowercase.charAt((int) (Math.random() * lowercase.length())));
+
+        for (int i = 3; i < length; i++) {
+            password.append(allChars.charAt((int) (Math.random() * allChars.length())));
+        }
+
+        return password.toString();
+    }
 }
