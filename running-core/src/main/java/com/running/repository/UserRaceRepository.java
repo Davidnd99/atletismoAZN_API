@@ -1,10 +1,9 @@
 package com.running.repository;
 
-import com.running.model.Career;
-import com.running.model.User;
 import com.running.model.UserRace;
 import com.running.model.UserRaceId;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,9 +11,40 @@ import java.util.Optional;
 
 @Repository
 public interface UserRaceRepository extends JpaRepository<UserRace, UserRaceId> {
+
     List<UserRace> findByUser_UID(String uid);
     Optional<UserRace> findByUserIdAndRaceId(Long userId, Long raceId);
     List<UserRace> findByUserIdAndStatus(Long userId, String status);
     Optional<UserRace> findByUser_UIDAndRace_Id(String uid, Long raceId);
+
+    // -------- Listados --------
+    // (si lo sigues usando por UID, puedes dejarlo)
+    List<UserRace> findByRace_Organizer_UIDAndStatus(String organizerUid, String status);
+
+    // NUEVO: por id del organizador (recomendado)
+    List<UserRace> findByRace_Organizer_IdAndStatus(Long organizerId, String status);
+
+    // Pendientes de una carrera concreta
+    List<UserRace> findByRace_IdAndStatus(Long raceId, String status);
+
+    // -------- Cancelaciones masivas (ADMIN) --------
+    // ✅ usar organizer.id para evitar problemas con el nombre físico de la columna UID
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update UserRace ur
+              set ur.status = 'cancelada'
+            where ur.race.organizer.id = :organizerId
+              and ur.status = 'pendiente'
+           """)
+    int cancelAllPendingByOrganizerId(@Param("organizerId") Long organizerId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update UserRace ur
+              set ur.status = 'cancelada'
+            where ur.race.id = :raceId
+              and ur.status = 'pendiente'
+           """)
+    int cancelAllPendingByRace(@Param("raceId") Long raceId);
 }
 

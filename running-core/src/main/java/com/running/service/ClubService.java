@@ -3,6 +3,7 @@ package com.running.service;
 import com.running.model.Club;
 import com.running.model.ClubDto;
 import com.running.model.User;
+import com.running.model.UserDto;
 import com.running.repository.ClubRepository;
 import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,15 +28,7 @@ public class ClubService {
 
         return clubs.stream()
                 .filter(club -> !"default".equalsIgnoreCase(club.getName()))
-                .map(club -> new ClubDto(
-                        club.getId(),
-                        club.getName(),
-                        club.getProvince(),
-                        club.getPhoto(),
-                        club.getPlace(),
-                        club.getMembers(),
-                        false,
-                        club.getContact()))
+                .map(c -> toClubDto(c, false))
                 .collect(Collectors.toList());
     }
 
@@ -47,16 +40,8 @@ public class ClubService {
         User user = userOpt.get();
 
         return user.getClubs().stream()
-                .filter(club -> !"default".equalsIgnoreCase(club.getName()))
-                .map(club -> new ClubDto(
-                        club.getId(),
-                        club.getName(),
-                        club.getProvince(),
-                        club.getPhoto(),
-                        club.getPlace(),
-                        club.getMembers(),
-                        true,
-                        club.getContact()))
+                .filter(c -> !"default".equalsIgnoreCase(c.getName()))
+                .map(c -> toClubDto(c, true))
                 .collect(Collectors.toList());
     }
 
@@ -73,15 +58,45 @@ public class ClubService {
             }
         }
 
-        return new ClubDto(
-                club.getId(),
-                club.getName(),
-                club.getProvince(),
-                club.getPhoto(),
-                club.getPlace(),
-                club.getMembers(),
-                joined,
-                club.getContact());
+        return toClubDto(club, joined);
     }
 
+    // NUEVO: miembros de un club
+    public List<UserDto> getUsersByClub(Long clubId) {
+        // Validar existencia del club
+        clubRepository.findById(clubId)
+                .orElseThrow(() -> new RuntimeException("Club no encontrado"));
+
+        List<User> users = userRepository.findByClubs_Id(clubId);
+
+        return users.stream()
+                .map(this::toUserDto)
+                .collect(Collectors.toList());
+    }
+
+    // ===== Helpers de mapeo =====
+
+    private UserDto toUserDto(User u) {
+        UserDto dto = new UserDto();
+        dto.setEmail(u.getEmail());
+        dto.setName(u.getName());
+        dto.setSurname(u.getSurname());
+        dto.setUid(u.getUID());
+        dto.setRole(u.getRole() != null ? u.getRole().getName() : null);
+        // Nunca devolvemos password
+        return dto;
+    }
+
+    private ClubDto toClubDto(Club c, boolean joined) {
+        return ClubDto.builder()
+                .id(c.getId())
+                .name(c.getName())
+                .province(c.getProvince())
+                .photo(c.getPhoto())
+                .place(c.getPlace())
+                .members(c.getMembers())
+                .contact(c.getContact())
+                .joined(joined)
+                .build();
+    }
 }

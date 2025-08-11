@@ -1,6 +1,7 @@
 package com.running.endpoint.api;
 
 import com.running.model.ClubDto;
+import com.running.model.UserDto;
 import com.running.service.ClubService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,4 +37,11 @@ public class ClubController {
             @RequestParam(required = false) String uid) {
         return ResponseEntity.ok(clubService.getClubById(id, uid));
     }
+
+    // NUEVO: Endpoint 4: Obtener los miembros de un club
+    @GetMapping("/{id}/members")
+    public ResponseEntity<List<UserDto>> getClubMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(clubService.getUsersByClub(id));
+    }
+
 }
