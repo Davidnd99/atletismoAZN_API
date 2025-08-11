@@ -39,4 +39,7 @@ public class Career {
     @ManyToOne
     @JoinColumn(name = "iddifficulty", nullable = false)
     private Difficulty difficulty;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "organizer_user_id")
+    private User organizer;
 }

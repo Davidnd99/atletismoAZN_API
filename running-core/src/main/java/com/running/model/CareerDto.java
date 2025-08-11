@@ -24,4 +24,5 @@ public class CareerDto {
     private Integer registered;
     @Column(name = "url")
     private String url;
+    private Long organizerUserId;
 }

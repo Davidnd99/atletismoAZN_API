@@ -15,4 +15,7 @@ public interface CareerRepository extends JpaRepository<Career, Long> {
     List<Career> findByType(Type type);
     List<Career> findByDifficulty(Difficulty difficulty);
     Optional<Career> findById(Long id);
+    List<Career> findByOrganizer_IdOrderByDateDesc(Long organizerUserId);
+    List<Career> findByOrganizer_UIDOrderByDateDesc(String organizerUid);
+    boolean existsByIdAndOrganizer_Id(Long careerId, Long organizerUserId);
 }

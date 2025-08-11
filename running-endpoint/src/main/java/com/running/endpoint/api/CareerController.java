@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// CareerController.java
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/careers")
@@ -55,5 +56,11 @@ public class CareerController {
         Difficulty difficulty = difficultyService.findById(difficultyId)
                 .orElseThrow(() -> new RuntimeException("Difficulty not found with id: " + difficultyId));
         return ResponseEntity.ok(careerService.findByDifficulty(difficulty));
+    }
+
+    // NUEVO: carreras gestionadas por un organizador
+    @GetMapping(value = "/getByOrganizer", produces = "application/json")
+    public ResponseEntity<List<Career>> getByOrganizer(@RequestParam Long organizerUserId) {
+        return ResponseEntity.ok(careerService.findByOrganizer(organizerUserId));
     }
 }
