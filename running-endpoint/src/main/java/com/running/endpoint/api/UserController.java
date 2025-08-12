@@ -90,4 +90,8 @@ public class UserController {
         return ResponseEntity.ok("User deleted from Firebase and DB");
     }
 
+    @GetMapping("/by-email")
+    public ResponseEntity<UserDto> getByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(userService.findByEmailDto(email));
+    }
 }

@@ -1,13 +1,11 @@
 package com.running.service;
 
-import com.running.model.Club;
-import com.running.model.ClubDto;
-import com.running.model.User;
-import com.running.model.UserDto;
+import com.running.model.*;
 import com.running.repository.ClubRepository;
 import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +15,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ClubService {
 
+    private static final String CLUB_ADMIN_ROLE = "club-administrator";
+
     private final ClubRepository clubRepository;
     private final UserRepository userRepository;
 
-    // Obtener todos los clubs (con o sin filtro por provincia)
+    // ===== EXISTENTES =====
+
     public List<ClubDto> getAllClubs(String provincia) {
         List<Club> clubs = (provincia != null && !provincia.isBlank())
                 ? clubRepository.findByProvinceIgnoreCaseAndNameNotIgnoreCase(provincia, "default")
@@ -32,7 +33,6 @@ public class ClubService {
                 .collect(Collectors.toList());
     }
 
-    // Obtener los clubs a los que pertenece un usuario
     public List<ClubDto> getClubsByUser(String uid) {
         Optional<User> userOpt = userRepository.findByUID(uid);
         if (userOpt.isEmpty()) return List.of();
@@ -45,7 +45,6 @@ public class ClubService {
                 .collect(Collectors.toList());
     }
 
-    // Obtener un club por ID y marcar si el usuario pertenece o no
     public ClubDto getClubById(Long id, String uid) {
         Club club = clubRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Club no encontrado"));
@@ -61,9 +60,7 @@ public class ClubService {
         return toClubDto(club, joined);
     }
 
-    // NUEVO: miembros de un club
     public List<UserDto> getUsersByClub(Long clubId) {
-        // Validar existencia del club
         clubRepository.findById(clubId)
                 .orElseThrow(() -> new RuntimeException("Club no encontrado"));
 
@@ -74,7 +71,59 @@ public class ClubService {
                 .collect(Collectors.toList());
     }
 
-    // ===== Helpers de mapeo =====
+    public AdminClubDto getManagerOfClub(Long clubId) {
+        Club club = clubRepository.findByIdWithManager(clubId)
+                .orElseThrow(() -> new RuntimeException("Club no encontrado"));
+        User m = club.getManager();
+        if (m == null) return null;
+        return new AdminClubDto(m.getUID(), m.getName(), m.getEmail());
+    }
+
+    // ===== NUEVOS =====
+
+    /**
+     * Actualiza datos del club (NO toca el manager).
+     */
+    @Transactional
+    public ClubDto updateClub(Long clubId, ClubDto data) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new RuntimeException("Club no encontrado"));
+
+        if (data.getName() != null) club.setName(data.getName());
+        if (data.getPlace() != null) club.setPlace(data.getPlace());
+        if (data.getProvince() != null) club.setProvince(data.getProvince());
+        if (data.getPhoto() != null) club.setPhoto(data.getPhoto());
+        if (data.getContact() != null) club.setContact(data.getContact());
+        // members se suele gestionar de forma interna, no lo toco aquí
+
+        Club saved = clubRepository.save(club);
+        return toClubDto(saved, false);
+    }
+
+    /**
+     * Cambia el administrador del club por email (valida rol).
+     */
+    @Transactional
+    public AdminClubDto updateClubManager(Long clubId, String managerEmail) {
+        Club club = clubRepository.findByIdWithManager(clubId)
+                .orElseThrow(() -> new RuntimeException("Club no encontrado"));
+
+        User newManager = userRepository.findByEmail(managerEmail)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ese email"));
+
+        if (newManager.getRole() == null ||
+                newManager.getRole().getName() == null ||
+                !CLUB_ADMIN_ROLE.equalsIgnoreCase(newManager.getRole().getName())) {
+            throw new RuntimeException("El usuario no tiene rol '" + CLUB_ADMIN_ROLE + "'");
+        }
+
+        club.setManager(newManager);
+        clubRepository.save(club);
+
+        return new AdminClubDto(newManager.getUID(), newManager.getName(), newManager.getEmail());
+    }
+
+    // ===== Helpers =====
 
     private UserDto toUserDto(User u) {
         UserDto dto = new UserDto();
@@ -83,7 +132,6 @@ public class ClubService {
         dto.setSurname(u.getSurname());
         dto.setUid(u.getUID());
         dto.setRole(u.getRole() != null ? u.getRole().getName() : null);
-        // Nunca devolvemos password
         return dto;
     }
 

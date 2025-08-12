@@ -238,4 +238,17 @@ public class UserService {
 
         return password.toString();
     }
+
+    public UserDto findByEmailDto(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        UserDto dto = new UserDto();
+        dto.setEmail(user.getEmail());
+        dto.setName(user.getName());
+        dto.setSurname(user.getSurname());
+        dto.setUid(user.getUID());
+        dto.setRole(user.getRole() != null ? user.getRole().getName() : null);
+        return dto;
+    }
+
 }
