@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-// OrganizerService.java
 @Service
 @RequiredArgsConstructor
 public class OrganizerService {
@@ -20,23 +19,34 @@ public class OrganizerService {
     private final TypeRepository typeRepository;
     private final UserRepository userRepository;
 
-    public User requireOrganizerByUid(String uid) {
+    private boolean isAdmin(User u) {
+        return userRepository.existsByIdAndRole_Name(u.getId(), "admin")
+                || userRepository.existsByIdAndRole_Name(u.getId(), "administrator");
+    }
+
+    private boolean isOrganizator(User u) {
+        return userRepository.existsByIdAndRole_Name(u.getId(), "organizator");
+    }
+
+    private User requireAdminOrOrganizator(String uid) {
         User u = userRepository.findByUID(uid)
                 .orElseThrow(() -> new RuntimeException("User not found by uid"));
-        if (!userRepository.existsByIdAndRole_Name(u.getId(), "organizator")) {
-            throw new RuntimeException("User is not an organizator");
-        }
-        return u;
+        if (isAdmin(u) || isOrganizator(u)) return u;
+        throw new RuntimeException("User must be admin or organizator");
     }
 
-    public List<Career> listMyRaces(String organizerUid) {
-        return careerRepository.findByOrganizer_UIDOrderByDateDesc(organizerUid);
+    /** ADMIN => todas; ORGANIZATOR => las suyas */
+    public List<Career> listMyRaces(String uid) {
+        User me = requireAdminOrOrganizator(uid);
+        if (isAdmin(me)) return careerRepository.findAll();
+        return careerRepository.findByOrganizer_UIDOrderByDateDesc(uid);
     }
 
-    public Career createAsOrganizer(String organizerUid, CareerDto dto) {
-        User me = requireOrganizerByUid(organizerUid);
+    /** Crea carrera; el organizador será el propio caller (admin u organizator). */
+    public Career createAsOrganizer(String uid, CareerDto dto) {
+        User me = requireAdminOrOrganizator(uid);
 
-        Difficulty difficulty = difficultyRepository.findById(dto.getIddifficulty().getIddifficulty())
+        Difficulty diff = difficultyRepository.findById(dto.getIddifficulty().getIddifficulty())
                 .orElseThrow(() -> new RuntimeException("Difficulty not found"));
         Type type = typeRepository.findById(dto.getType().getId_type())
                 .orElseThrow(() -> new RuntimeException("Type not found"));
@@ -49,27 +59,28 @@ public class OrganizerService {
                 .date(dto.getDate())
                 .province(dto.getProvince())
                 .url(dto.getUrl())
-                .difficulty(difficulty)
+                .difficulty(diff)
                 .type(type)
                 .slope(dto.getSlope())
                 .registered(dto.getRegistered())
-                .organizer(me) // clave
+                .organizer(me)
                 .build();
 
         return careerRepository.save(c);
     }
 
-    public Career updateMyRace(String organizerUid, Long raceId, CareerDto dto) {
-        User me = requireOrganizerByUid(organizerUid);
-
+    /** ADMIN => puede editar cualquiera; ORGANIZATOR => solo si es suya. */
+    public Career updateMyRace(String uid, Long raceId, CareerDto dto) {
+        User me = requireAdminOrOrganizator(uid);
         Career c = careerRepository.findById(raceId)
                 .orElseThrow(() -> new RuntimeException("Career not found"));
 
-        if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(me.getId())) {
-            throw new RuntimeException("No puedes gestionar esta carrera");
+        if (!isAdmin(me)) {
+            if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(me.getId())) {
+                throw new RuntimeException("No puedes gestionar esta carrera");
+            }
         }
 
-        // actualiza campos permitidos:
         if (dto.getPhoto() != null) c.setPhoto(dto.getPhoto());
         if (dto.getName() != null) c.setName(dto.getName());
         if (dto.getPlace() != null) c.setPlace(dto.getPlace());
@@ -79,6 +90,7 @@ public class OrganizerService {
         if (dto.getUrl() != null) c.setUrl(dto.getUrl());
         if (dto.getSlope() != null) c.setSlope(dto.getSlope());
         if (dto.getRegistered() != null) c.setRegistered(dto.getRegistered());
+
         if (dto.getType() != null) {
             Type t = typeRepository.findById(dto.getType().getId_type())
                     .orElseThrow(() -> new RuntimeException("Type not found"));
@@ -90,18 +102,40 @@ public class OrganizerService {
             c.setDifficulty(d);
         }
 
+        // === NUEVO: reasignar organizador si llega organizerUserId (solo ADMIN) ===
+        if (dto.getOrganizerUserId() != null) {
+            if (!isAdmin(me)) {
+                throw new RuntimeException("Solo un ADMIN puede cambiar el organizador de la carrera");
+            }
+
+            User newOrganizer = userRepository.findById(dto.getOrganizerUserId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Organizer user not found by id: " + dto.getOrganizerUserId()));
+
+            if (!userRepository.existsByIdAndRole_Name(newOrganizer.getId(), "organizator")) {
+                throw new RuntimeException("El usuario destino no tiene rol 'organizator'");
+            }
+
+            // Si es el mismo, no hace falta tocar nada, pero no es un error
+            if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(newOrganizer.getId())) {
+                c.setOrganizer(newOrganizer);
+            }
+        }
+
         return careerRepository.save(c);
     }
 
-    public void deleteMyRace(String organizerUid, Long raceId) {
-        User me = requireOrganizerByUid(organizerUid);
+    /** ADMIN => puede borrar cualquiera; ORGANIZATOR => solo si es suya. */
+    public void deleteMyRace(String uid, Long raceId) {
+        User me = requireAdminOrOrganizator(uid);
         Career c = careerRepository.findById(raceId)
                 .orElseThrow(() -> new RuntimeException("Career not found"));
 
-        if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(me.getId())) {
-            throw new IllegalStateException("No puedes gestionar esta carrera");
+        if (!isAdmin(me)) {
+            if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(me.getId())) {
+                throw new RuntimeException("No puedes gestionar esta carrera");
+            }
         }
         careerRepository.deleteById(raceId);
     }
 }
-

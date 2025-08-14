@@ -5,6 +5,7 @@ import com.running.repository.CareerRepository;
 import com.running.repository.DifficultyRepository;
 import com.running.repository.TypeRepository;
 import com.running.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -63,5 +64,35 @@ public class CareerService {
 
     public List<Career> findByOrganizer(Long organizerUserId) {
         return careerRepository.findByOrganizer_IdOrderByDateDesc(organizerUserId);
+    }
+
+    /* ===== NUEVO: GET/PUT organizer de una carrera ===== */
+
+    public OrganizerDto getOrganizerOfRace(Long raceId) {
+        Career c = careerRepository.findByIdWithOrganizer(raceId)
+                .orElseThrow(() -> new RuntimeException("Career not found"));
+        if (c.getOrganizer() == null) return null;
+        var u = c.getOrganizer();
+        return new OrganizerDto(u.getUID(), u.getName(), u.getEmail());
+    }
+
+    @Transactional
+    public OrganizerDto updateRaceOrganizer(Long raceId, String organizerEmail) {
+        if (organizerEmail == null || organizerEmail.isBlank()) {
+            throw new RuntimeException("Email is required");
+        }
+        Career c = careerRepository.findById(raceId)
+                .orElseThrow(() -> new RuntimeException("Career not found"));
+
+        var u = userRepository.findByEmail(organizerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found by email"));
+
+        if (!userRepository.existsByIdAndRole_Name(u.getId(), "organizator")) {
+            throw new RuntimeException("User is not an 'organizator'");
+        }
+
+        c.setOrganizer(u);
+        careerRepository.save(c);
+        return new OrganizerDto(u.getUID(), u.getName(), u.getEmail());
     }
 }

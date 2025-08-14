@@ -3,6 +3,7 @@ package com.running.endpoint.api;
 import com.running.model.Career;
 import com.running.model.CareerDto;
 import com.running.model.Difficulty;
+import com.running.model.OrganizerDto;
 import com.running.model.Type;
 import com.running.service.CareerService;
 import com.running.service.DifficultyService;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// CareerController.java
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/careers")
@@ -58,9 +58,22 @@ public class CareerController {
         return ResponseEntity.ok(careerService.findByDifficulty(difficulty));
     }
 
-    // NUEVO: carreras gestionadas por un organizador
     @GetMapping(value = "/getByOrganizer", produces = "application/json")
     public ResponseEntity<List<Career>> getByOrganizer(@RequestParam Long organizerUserId) {
         return ResponseEntity.ok(careerService.findByOrganizer(organizerUserId));
+    }
+
+    /* ===== NUEVO: organizer de una carrera ===== */
+
+    @GetMapping("/{id}/organizer")
+    public ResponseEntity<OrganizerDto> getOrganizer(@PathVariable Long id) {
+        return ResponseEntity.ok(careerService.getOrganizerOfRace(id));
+    }
+
+    @PutMapping("/{id}/organizer")
+    public ResponseEntity<OrganizerDto> updateOrganizer(@PathVariable Long id,
+                                                        @RequestBody java.util.Map<String, String> body) {
+        String email = body.get("email");
+        return ResponseEntity.ok(careerService.updateRaceOrganizer(id, email));
     }
 }
