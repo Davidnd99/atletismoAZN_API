@@ -9,9 +9,15 @@ import com.running.service.CareerService;
 import com.running.service.DifficultyService;
 import com.running.service.TypeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @CrossOrigin(origins = "*")
@@ -37,6 +43,63 @@ public class CareerController {
     @GetMapping(value = "/getAll", produces = "application/json")
     public ResponseEntity<List<Career>> getAllCareers() {
         return ResponseEntity.ok(careerService.findAll());
+    }
+
+    @GetMapping(value = "/filter", produces = "application/json")
+    public ResponseEntity<List<Career>> filterCareers(
+            @RequestParam(required = false) String province,
+            @RequestParam(required = false, name = "fechaDesde") String fechaDesdeStr,
+            @RequestParam(required = false, name = "fechaHasta") String fechaHastaStr,
+            @RequestParam(required = false) Long typeId,
+            @RequestParam(required = false) Long difficultyId,
+            @RequestParam(required = false) Boolean finalizada
+    ) {
+        LocalDateTime from = parseStart(fechaDesdeStr);
+        LocalDateTime to   = parseEnd(fechaHastaStr);
+
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "fechaDesde no puede ser posterior a fechaHasta"
+            );
+        }
+
+        List<Career> result = careerService.filterCareers(
+                province, from, to, typeId, difficultyId, finalizada
+        );
+        return ResponseEntity.ok(result);
+    }
+
+    // ---- Helpers de parseo tolerantes a formatos típicos ----
+    private LocalDateTime parseStart(String s) {
+        if (s == null || s.isBlank()) return null;
+        String t = s.trim().replace(' ', 'T'); // soporta "YYYY-MM-DD HH:mm:ss"
+        // Solo fecha -> inicio del día
+        if (t.length() == 10) {
+            LocalDate d = LocalDate.parse(t, DateTimeFormatter.ISO_LOCAL_DATE);
+            return d.atStartOfDay();
+        }
+        try {
+            return LocalDateTime.parse(t, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Formato de fechaDesde inválido. Usa 'yyyy-MM-dd' o 'yyyy-MM-ddTHH:mm:ss'");
+        }
+    }
+
+    private LocalDateTime parseEnd(String s) {
+        if (s == null || s.isBlank()) return null;
+        String t = s.trim().replace(' ', 'T');
+        if (t.length() == 10) {
+            LocalDate d = LocalDate.parse(t, DateTimeFormatter.ISO_LOCAL_DATE);
+            return d.atTime(23, 59, 59); // fin de día inclusivo
+        }
+        try {
+            return LocalDateTime.parse(t, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Formato de fechaHasta inválido. Usa 'yyyy-MM-dd' o 'yyyy-MM-ddTHH:mm:ss'");
+        }
     }
 
     @GetMapping(value = "/getByProvince", produces = "application/json")

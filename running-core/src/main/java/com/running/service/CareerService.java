@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -43,6 +44,29 @@ public class CareerService {
 
         // 👇 Sin asignación de organizer aquí
         return careerRepository.save(career);
+    }
+
+    public List<Career> filterCareers(
+            String province,
+            LocalDateTime fechaDesde,
+            LocalDateTime fechaHasta,
+            Long typeId,
+            Long difficultyId,
+            Boolean finalizada
+    ) {
+        return careerRepository.filterCareers(
+                blankToNull(province),
+                typeId,
+                difficultyId,
+                fechaDesde,
+                fechaHasta,
+                finalizada,
+                LocalDateTime.now()  // comparación con "ahora" para finalizada
+        );
+    }
+
+    private String blankToNull(String s) {
+        return (s == null || s.isBlank()) ? null : s;
     }
 
     public List<Career> findByOrganizerUid(String organizerUid) {
