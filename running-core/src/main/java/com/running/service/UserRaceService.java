@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserRaceService {
 
+    private static final String PENDIENTE  = "pendiente";
+    private static final String CONFIRMADA = "confirmada";
+    private static final String CANCELADA  = "cancelada";
+
     private final UserRepository userRepository;
     private final CareerRepository careerRepository;
     private final UserRaceRepository userRaceRepository;
@@ -31,39 +35,83 @@ public class UserRaceService {
         Career race = careerRepository.findById(raceId)
                 .orElseThrow(() -> new RuntimeException("Carrera no encontrada"));
 
+        Optional<UserRace> existingOpt = userRaceRepository.findByUserIdAndRaceId(user.getId(), raceId);
+        if (existingOpt.isPresent()) {
+            UserRace ur = existingOpt.get();
+            String status = ur.getStatus() == null ? "" : ur.getStatus().toLowerCase();
+            switch (status) {
+                case PENDIENTE -> { /* idempotente */ return; }
+                case CANCELADA -> { ur.setStatus(PENDIENTE); ur.setRegistrationDate(LocalDateTime.now()); userRaceRepository.save(ur); return; }
+                case CONFIRMADA -> throw new RuntimeException("Ya estás inscrito en esta carrera");
+                default -> { ur.setStatus(PENDIENTE); ur.setRegistrationDate(LocalDateTime.now()); userRaceRepository.save(ur); return; }
+            }
+        }
+
         UserRace userRace = UserRace.builder()
                 .user(user)
                 .race(race)
                 .registrationDate(LocalDateTime.now())
-                .status("pendiente")
+                .status(PENDIENTE)
                 .build();
-
         userRaceRepository.save(userRace);
     }
 
     @Transactional
     public void confirmRegistration(String uid, Long raceId) {
-        User user = userRepository.findByUID(uid).orElseThrow();
-        UserRaceId id = new UserRaceId(user.getId(), raceId);
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        UserRace ur = userRaceRepository.findById(id)
+        UserRace ur = userRaceRepository.findByUserIdAndRaceId(user.getId(), raceId)
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
 
-        ur.setStatus("confirmada");
+        String status = ur.getStatus() == null ? "" : ur.getStatus().toLowerCase();
+
+        if (CONFIRMADA.equals(status)) {
+            // idempotente: ya estaba confirmada
+            return;
+        }
+        if (!PENDIENTE.equals(status)) {
+            throw new RuntimeException("Solo puedes confirmar una inscripción en estado 'pendiente'");
+        }
+
+        ur.setStatus(CONFIRMADA);
         userRaceRepository.save(ur);
+
+        // ++ inscritos
+        Career race = ur.getRace();
+        int current = race.getRegistered() == null ? 0 : race.getRegistered();
+        race.setRegistered(current + 1);
+        careerRepository.save(race);
     }
 
     @Transactional
     public void cancelRegistration(String uid, Long raceId) {
-        User user = userRepository.findByUID(uid).orElseThrow();
-        UserRaceId id = new UserRaceId(user.getId(), raceId);
+        User user = userRepository.findByUID(uid)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        UserRace ur = userRaceRepository.findById(id)
+        UserRace ur = userRaceRepository.findByUserIdAndRaceId(user.getId(), raceId)
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
 
-        ur.setStatus("cancelada");
+        String status = ur.getStatus() == null ? "" : ur.getStatus().toLowerCase();
+
+        if (CANCELADA.equals(status)) {
+            // idempotente
+            return;
+        }
+
+        if (CONFIRMADA.equals(status)) {
+            // -- inscritos
+            Career race = ur.getRace();
+            int current = race.getRegistered() == null ? 0 : race.getRegistered();
+            race.setRegistered(Math.max(0, current - 1));
+            careerRepository.save(race);
+        }
+
+        // PENDIENTE o CONFIRMADA -> CANCELADA
+        ur.setStatus(CANCELADA);
         userRaceRepository.save(ur);
     }
+
 
     public List<UserRaceResponseDto> getUserRaceDtos(String uid) {
         List<UserRace> userRaces = userRaceRepository.findByUser_UID(uid);

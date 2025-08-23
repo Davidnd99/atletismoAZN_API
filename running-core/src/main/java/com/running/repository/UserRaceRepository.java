@@ -1,5 +1,6 @@
 package com.running.repository;
 
+import com.running.model.ParticipantDto;
 import com.running.model.UserRace;
 import com.running.model.UserRaceId;
 import org.springframework.data.jpa.repository.*;
@@ -46,5 +47,29 @@ public interface UserRaceRepository extends JpaRepository<UserRace, UserRaceId> 
               and ur.status = 'pendiente'
            """)
     int cancelAllPendingByRace(@Param("raceId") Long raceId);
+
+    @Query("""
+           SELECT new com.running.model.ParticipantDto(u.UID, u.name, u.email)
+           FROM UserRace ur
+           JOIN ur.user u
+           JOIN u.role r
+           WHERE ur.race.id = :raceId
+             AND LOWER(r.name) = 'user'
+             AND (:status IS NULL OR LOWER(ur.status) = LOWER(:status))
+           """)
+    List<ParticipantDto> findParticipantsByRaceAndRoleUser(
+            @Param("raceId") Long raceId,
+            @Param("status") String status
+    );
+
+    @Query("""
+           SELECT ur FROM UserRace ur
+           JOIN ur.user u
+           WHERE ur.race.id = :raceId
+             AND u.UID = :userUid
+             AND LOWER(ur.status) = 'pendiente'
+           """)
+    Optional<UserRace> findPendingByRaceIdAndUserUid(@Param("raceId") Long raceId,
+                                                     @Param("userUid") String userUid);
 }
 

@@ -44,4 +44,13 @@ public class OrganizerController {
         service.deleteMyRace(uid, id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{uid}/races/{raceId}/registrations/cancel-pending")
+    public ResponseEntity<String> cancelPendingForUser(@PathVariable String uid,
+                                                       @PathVariable Long raceId,
+                                                       @RequestParam String userUid) {
+        service.cancelPendingRegistration(uid, raceId, userUid);
+        return ResponseEntity.ok("Inscripción pendiente cancelada");
+    }
+
 }

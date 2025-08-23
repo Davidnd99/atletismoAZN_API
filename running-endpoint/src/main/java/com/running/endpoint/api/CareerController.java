@@ -1,12 +1,9 @@
 package com.running.endpoint.api;
 
-import com.running.model.Career;
-import com.running.model.CareerDto;
-import com.running.model.Difficulty;
-import com.running.model.OrganizerDto;
-import com.running.model.Type;
+import com.running.model.*;
 import com.running.service.CareerService;
 import com.running.service.DifficultyService;
+import com.running.service.ParticipantService;
 import com.running.service.TypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,6 +26,7 @@ public class CareerController {
     private final CareerService careerService;
     private final DifficultyService difficultyService;
     private final TypeService typeService;
+    private final ParticipantService participantService;
 
     @PostMapping(value = "/save", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Career> addCareer(@RequestBody CareerDto request) {
@@ -138,5 +136,18 @@ public class CareerController {
                                                         @RequestBody java.util.Map<String, String> body) {
         String email = body.get("email");
         return ResponseEntity.ok(careerService.updateRaceOrganizer(id, email));
+    }
+
+    /** Lista participantes (rol 'user') inscritos en una carrera.
+     *  Permisos: admin o el organizador de la carrera.
+     *  status (opcional): si se envía, filtra por estado (ej. 'confirmada', 'pendiente', etc).
+     */
+    @GetMapping("/{raceId}/participants")
+    public ResponseEntity<List<ParticipantDto>> listParticipants(
+            @PathVariable Long raceId,
+            @RequestParam String uid,
+            @RequestParam(required = false) String status
+    ) {
+        return ResponseEntity.ok(participantService.listParticipants(uid, raceId, status));
     }
 }

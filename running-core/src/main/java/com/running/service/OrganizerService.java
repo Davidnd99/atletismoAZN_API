@@ -5,6 +5,7 @@ import com.running.repository.CareerRepository;
 import com.running.repository.DifficultyRepository;
 import com.running.repository.TypeRepository;
 import com.running.repository.UserRepository;
+import com.running.repository.UserRaceRepository; // 👈 NUEVO
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class OrganizerService {
     private final DifficultyRepository difficultyRepository;
     private final TypeRepository typeRepository;
     private final UserRepository userRepository;
+    private final UserRaceRepository userRaceRepository; // 👈 NUEVO
 
     private boolean isAdmin(User u) {
         return userRepository.existsByIdAndRole_Name(u.getId(), "admin")
@@ -102,21 +104,16 @@ public class OrganizerService {
             c.setDifficulty(d);
         }
 
-        // === NUEVO: reasignar organizador si llega organizerUserId (solo ADMIN) ===
+        // === Reasignar organizador (solo ADMIN)
         if (dto.getOrganizerUserId() != null) {
             if (!isAdmin(me)) {
                 throw new RuntimeException("Solo un ADMIN puede cambiar el organizador de la carrera");
             }
-
             User newOrganizer = userRepository.findById(dto.getOrganizerUserId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Organizer user not found by id: " + dto.getOrganizerUserId()));
-
+                    .orElseThrow(() -> new RuntimeException("Organizer user not found by id: " + dto.getOrganizerUserId()));
             if (!userRepository.existsByIdAndRole_Name(newOrganizer.getId(), "organizator")) {
                 throw new RuntimeException("El usuario destino no tiene rol 'organizator'");
             }
-
-            // Si es el mismo, no hace falta tocar nada, pero no es un error
             if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(newOrganizer.getId())) {
                 c.setOrganizer(newOrganizer);
             }
@@ -137,5 +134,29 @@ public class OrganizerService {
             }
         }
         careerRepository.deleteById(raceId);
+    }
+
+    // === NUEVO: cancelar una inscripción PENDIENTE de un usuario en una carrera ===
+    public void cancelPendingRegistration(String organizerUid, Long raceId, String targetUserUid) {
+        User organizer = requireAdminOrOrganizator(organizerUid);
+        Career c = careerRepository.findById(raceId)
+                .orElseThrow(() -> new RuntimeException("Career not found"));
+
+        // Si no es admin, debe ser el organizador de la carrera
+        if (!isAdmin(organizer)) {
+            if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(organizer.getId())) {
+                throw new RuntimeException("No autorizado para cancelar inscripciones en esta carrera");
+            }
+        }
+
+        var ur = userRaceRepository.findPendingByRaceIdAndUserUid(raceId, targetUserUid)
+                .orElseThrow(() -> new RuntimeException("No existe inscripción PENDIENTE para ese usuario en esta carrera"));
+
+        // Política: marcar como cancelada (si prefieres eliminar, usa delete)
+        ur.setStatus("cancelada");
+        userRaceRepository.save(ur);
+
+        // Si quieres eliminar el registro en lugar de marcar cancelada:
+        // userRaceRepository.delete(ur);
     }
 }
