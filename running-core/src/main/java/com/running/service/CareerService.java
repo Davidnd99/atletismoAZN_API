@@ -5,7 +5,7 @@ import com.running.repository.CareerRepository;
 import com.running.repository.DifficultyRepository;
 import com.running.repository.TypeRepository;
 import com.running.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +20,12 @@ public class CareerService {
     private final DifficultyRepository difficultyRepository;
     private final TypeRepository typeRepository;
     private final UserRepository userRepository; // <-- lo puedes mantener si lo usas en otros métodos
+
+
+    private boolean isAdmin(User u) {
+        return userRepository.existsByIdAndRole_Name(u.getId(), "admin");
+    }
+
 
     public Career save(CareerDto request) {
         Difficulty difficulty = difficultyRepository.findById(request.getIddifficulty().getIddifficulty())
@@ -111,8 +117,10 @@ public class CareerService {
         var u = userRepository.findByEmail(organizerEmail)
                 .orElseThrow(() -> new RuntimeException("User not found by email"));
 
-        if (!userRepository.existsByIdAndRole_Name(u.getId(), "organizator")) {
-            throw new RuntimeException("User is not an 'organizator'");
+        // ✅ ACEPTA organizator O admin
+        boolean isOrganizator = userRepository.existsByIdAndRole_Name(u.getId(), "organizator");
+        if (!isOrganizator && !isAdmin(u)) {
+            throw new RuntimeException("El usuario debe ser 'organizator' o 'admin'");
         }
 
         c.setOrganizer(u);

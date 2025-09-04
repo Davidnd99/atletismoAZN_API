@@ -3,7 +3,9 @@ package com.running.repository;
 import com.running.model.Career;
 import com.running.model.Type;
 import com.running.model.Difficulty;
+import com.running.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -45,4 +47,12 @@ public interface CareerRepository extends JpaRepository<Career, Long> {
             @Param("finalizada") Boolean finalizada,
             @Param("now") LocalDateTime now
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Career c SET c.organizer = :newOrganizer WHERE c.organizer = :oldOrganizer")
+    int reassignOrganizer(@Param("oldOrganizer") User oldOrganizer,
+                          @Param("newOrganizer") User newOrganizer);
+
+    @Query("select c.id from Career c where c.organizer = :organizer")
+    List<Long> findIdsByOrganizer(@Param("organizer") User organizer);
 }

@@ -17,11 +17,16 @@ public class ClubAdminService {
     private final ClubRepository clubRepository;
     private final UserRepository userRepository;
 
+    private boolean isAdmin(User u) {
+        return userRepository.existsByIdAndRole_Name(u.getId(), "admin");
+    }
+
     private User requireClubAdminByUid(String uid) {
         User u = userRepository.findByUID(uid)
                 .orElseThrow(() -> new RuntimeException("User not found by uid"));
-        if (!userRepository.existsByIdAndRole_Name(u.getId(), "club-administrator")) {
-            throw new RuntimeException("User is not a club-administrator");
+        boolean ok = isAdmin(u) || userRepository.existsByIdAndRole_Name(u.getId(), "club-administrator");
+        if (!ok) {
+            throw new RuntimeException("User is not admin nor club-administrator");
         }
         return u;
     }

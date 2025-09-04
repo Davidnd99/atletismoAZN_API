@@ -85,10 +85,13 @@ public class UserController {
     }
 
     @DeleteMapping("/admin-delete/{uid}")
-    public ResponseEntity<String> deleteUserWithFirebase(@PathVariable String uid) {
-        userService.deleteUserWithFirebase(uid);
-        return ResponseEntity.ok("User deleted from Firebase and DB");
+    public ResponseEntity<String> adminDelete(
+            @PathVariable String uid,
+            @RequestParam("actingUid") String actingUid) {
+        userService.adminDeleteWithFirebase(uid, actingUid);
+        return ResponseEntity.ok("User reassigned (if organizer) and deleted from DB + Firebase");
     }
+
 
     @GetMapping("/by-email")
     public ResponseEntity<UserDto> getByEmail(@RequestParam String email) {

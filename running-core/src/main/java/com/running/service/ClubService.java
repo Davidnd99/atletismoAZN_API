@@ -20,8 +20,11 @@ public class ClubService {
     private final ClubRepository clubRepository;
     private final UserRepository userRepository;
 
-    // ===== EXISTENTES =====
+    private boolean isAdmin(User u) {
+        return userRepository.existsByIdAndRole_Name(u.getId(), "admin");
+    }
 
+    @Transactional(readOnly = true)
     public List<ClubDto> getAllClubs(String provincia) {
         List<Club> clubs = (provincia != null && !provincia.isBlank())
                 ? clubRepository.findByProvinceIgnoreCaseAndNameNotIgnoreCase(provincia, "default")
@@ -33,8 +36,10 @@ public class ClubService {
                 .collect(Collectors.toList());
     }
 
+    // ⬇️ Usa fetch join para evitar LazyInitializationException
+    @Transactional(readOnly = true)
     public List<ClubDto> getClubsByUser(String uid) {
-        Optional<User> userOpt = userRepository.findByUID(uid);
+        Optional<User> userOpt = userRepository.findByUIDWithClubs(uid);
         if (userOpt.isEmpty()) return List.of();
 
         User user = userOpt.get();
@@ -45,13 +50,15 @@ public class ClubService {
                 .collect(Collectors.toList());
     }
 
+    // ⬇️ También aquí, para evaluar "joined" sin lazy problems
+    @Transactional(readOnly = true)
     public ClubDto getClubById(Long id, String uid) {
         Club club = clubRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Club no encontrado"));
 
         boolean joined = false;
         if (uid != null) {
-            Optional<User> userOpt = userRepository.findByUID(uid);
+            Optional<User> userOpt = userRepository.findByUIDWithClubs(uid);
             if (userOpt.isPresent()) {
                 joined = userOpt.get().getClubs().contains(club);
             }
@@ -60,6 +67,7 @@ public class ClubService {
         return toClubDto(club, joined);
     }
 
+    @Transactional(readOnly = true)
     public List<UserDto> getUsersByClub(Long clubId) {
         clubRepository.findById(clubId)
                 .orElseThrow(() -> new RuntimeException("Club no encontrado"));
@@ -71,6 +79,7 @@ public class ClubService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public AdminClubDto getManagerOfClub(Long clubId) {
         Club club = clubRepository.findByIdWithManager(clubId)
                 .orElseThrow(() -> new RuntimeException("Club no encontrado"));
@@ -81,9 +90,6 @@ public class ClubService {
 
     // ===== NUEVOS =====
 
-    /**
-     * Actualiza datos del club (NO toca el manager).
-     */
     @Transactional
     public ClubDto updateClub(Long clubId, ClubDto data) {
         Club club = clubRepository.findById(clubId)
@@ -94,14 +100,14 @@ public class ClubService {
         if (data.getProvince() != null) club.setProvince(data.getProvince());
         if (data.getPhoto() != null) club.setPhoto(data.getPhoto());
         if (data.getContact() != null) club.setContact(data.getContact());
-        // members se suele gestionar de forma interna, no lo toco aquí
 
         Club saved = clubRepository.save(club);
         return toClubDto(saved, false);
     }
 
     /**
-     * Cambia el administrador del club por email (valida rol).
+     * Actualiza el manager del club.
+     * El usuario debe existir y tener rol 'club-administrator' o 'admin'.
      */
     @Transactional
     public AdminClubDto updateClubManager(Long clubId, String managerEmail) {
@@ -111,10 +117,13 @@ public class ClubService {
         User newManager = userRepository.findByEmail(managerEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ese email"));
 
-        if (newManager.getRole() == null ||
-                newManager.getRole().getName() == null ||
-                !CLUB_ADMIN_ROLE.equalsIgnoreCase(newManager.getRole().getName())) {
-            throw new RuntimeException("El usuario no tiene rol '" + CLUB_ADMIN_ROLE + "'");
+        boolean isClubAdmin = newManager.getRole() != null
+                && newManager.getRole().getName() != null
+                && CLUB_ADMIN_ROLE.equalsIgnoreCase(newManager.getRole().getName());
+
+        // ✅ ACEPTA club-administrator O admin
+        if (!isClubAdmin && !isAdmin(newManager)) {
+            throw new RuntimeException("El usuario debe ser 'club-administrator' o 'admin'");
         }
 
         club.setManager(newManager);
