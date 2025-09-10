@@ -1,6 +1,6 @@
 package com.running.repository;
 
-import com.running.model.Career;
+import com.running.model.Race;
 import com.running.model.Type;
 import com.running.model.Difficulty;
 import com.running.model.User;
@@ -15,20 +15,20 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CareerRepository extends JpaRepository<Career, Long> {
-    List<Career> findByProvince(String province);
-    List<Career> findByType(Type type);
-    List<Career> findByDifficulty(Difficulty difficulty);
-    Optional<Career> findById(Long id);
-    List<Career> findByOrganizer_IdOrderByDateDesc(Long organizerUserId);
-    List<Career> findByOrganizer_UIDOrderByDateDesc(String organizerUid);
-    boolean existsByIdAndOrganizer_Id(Long careerId, Long organizerUserId);
+public interface RaceRepository extends JpaRepository<Race, Long> {
+    List<Race> findByProvince(String province);
+    List<Race> findByType(Type type);
+    List<Race> findByDifficulty(Difficulty difficulty);
+    Optional<Race> findById(Long id);
+    List<Race> findByOrganizer_IdOrderByDateDesc(Long organizerUserId);
+    List<Race> findByOrganizer_UIDOrderByDateDesc(String organizerUid);
+    boolean existsByIdAndOrganizer_Id(Long raceId, Long organizerUserId);
 
     // NUEVO: cargar carrera con organizador (join fetch)
-    @Query("select c from Career c left join fetch c.organizer where c.id = :id")
-    Optional<Career> findByIdWithOrganizer(@Param("id") Long id);
+    @Query("select c from Race c left join fetch c.organizer where c.id = :id")
+    Optional<Race> findByIdWithOrganizer(@Param("id") Long id);
 
-    @Query("SELECT c FROM Career c " +
+    @Query("SELECT c FROM Race c " +
             "WHERE (:province IS NULL OR c.province = :province) " +
             "AND (:typeId IS NULL OR c.type.id_type = :typeId) " +
             "AND (:difficultyId IS NULL OR c.difficulty.iddifficulty = :difficultyId) " +
@@ -38,7 +38,7 @@ public interface CareerRepository extends JpaRepository<Career, Long> {
             "     (:finalizada = TRUE  AND c.date < :now) OR " +
             "     (:finalizada = FALSE AND c.date >= :now)) " +
             "ORDER BY c.date ASC")
-    List<Career> filterCareers(
+    List<Race> filterRaces(
             @Param("province") String province,
             @Param("typeId") Long typeId,
             @Param("difficultyId") Long difficultyId,
@@ -49,10 +49,10 @@ public interface CareerRepository extends JpaRepository<Career, Long> {
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE Career c SET c.organizer = :newOrganizer WHERE c.organizer = :oldOrganizer")
+    @Query("UPDATE Race c SET c.organizer = :newOrganizer WHERE c.organizer = :oldOrganizer")
     int reassignOrganizer(@Param("oldOrganizer") User oldOrganizer,
                           @Param("newOrganizer") User newOrganizer);
 
-    @Query("select c.id from Career c where c.organizer = :organizer")
+    @Query("select c.id from Race c where c.organizer = :organizer")
     List<Long> findIdsByOrganizer(@Param("organizer") User organizer);
 }

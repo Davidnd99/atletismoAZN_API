@@ -1,7 +1,7 @@
 package com.running.service;
 
 import com.running.model.*;
-import com.running.repository.CareerRepository;
+import com.running.repository.RaceRepository;
 import com.running.repository.DifficultyRepository;
 import com.running.repository.TypeRepository;
 import com.running.repository.UserRepository;
@@ -14,9 +14,9 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CareerService {
+public class RaceService {
 
-    private final CareerRepository careerRepository;
+    private final RaceRepository raceRepository;
     private final DifficultyRepository difficultyRepository;
     private final TypeRepository typeRepository;
     private final UserRepository userRepository; // <-- lo puedes mantener si lo usas en otros métodos
@@ -27,14 +27,14 @@ public class CareerService {
     }
 
 
-    public Career save(CareerDto request) {
+    public Race save(RaceDto request) {
         Difficulty difficulty = difficultyRepository.findById(request.getIddifficulty().getIddifficulty())
                 .orElseThrow(() -> new RuntimeException("Difficulty not found with id: " + request.getIddifficulty().getIddifficulty()));
 
         Type type = typeRepository.findById(request.getType().getId_type())
                 .orElseThrow(() -> new RuntimeException("Type not found with id: " + request.getType().getId_type()));
 
-        Career career = Career.builder()
+        Race race = Race.builder()
                 .photo(request.getPhoto())
                 .name(request.getName())
                 .place(request.getPlace())
@@ -49,10 +49,10 @@ public class CareerService {
                 .build();
 
         // 👇 Sin asignación de organizer aquí
-        return careerRepository.save(career);
+        return raceRepository.save(race);
     }
 
-    public List<Career> filterCareers(
+    public List<Race> filterRaces(
             String province,
             LocalDateTime fechaDesde,
             LocalDateTime fechaHasta,
@@ -60,7 +60,7 @@ public class CareerService {
             Long difficultyId,
             Boolean finalizada
     ) {
-        return careerRepository.filterCareers(
+        return raceRepository.filterRaces(
                 blankToNull(province),
                 typeId,
                 difficultyId,
@@ -75,32 +75,32 @@ public class CareerService {
         return (s == null || s.isBlank()) ? null : s;
     }
 
-    public List<Career> findByOrganizerUid(String organizerUid) {
-        return careerRepository.findByOrganizer_UIDOrderByDateDesc(organizerUid);
+    public List<Race> findByOrganizerUid(String organizerUid) {
+        return raceRepository.findByOrganizer_UIDOrderByDateDesc(organizerUid);
     }
 
-    public Career findById(Long id) {
-        return careerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Career not found with id: " + id));
+    public Race findById(Long id) {
+        return raceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Race not found with id: " + id));
     }
 
-    public List<Career> findAll() { return careerRepository.findAll(); }
+    public List<Race> findAll() { return raceRepository.findAll(); }
 
-    public List<Career> findByProvince(String province) { return careerRepository.findByProvince(province); }
+    public List<Race> findByProvince(String province) { return raceRepository.findByProvince(province); }
 
-    public List<Career> findByType(Type type) { return careerRepository.findByType(type); }
+    public List<Race> findByType(Type type) { return raceRepository.findByType(type); }
 
-    public List<Career> findByDifficulty(Difficulty difficulty) { return careerRepository.findByDifficulty(difficulty); }
+    public List<Race> findByDifficulty(Difficulty difficulty) { return raceRepository.findByDifficulty(difficulty); }
 
-    public List<Career> findByOrganizer(Long organizerUserId) {
-        return careerRepository.findByOrganizer_IdOrderByDateDesc(organizerUserId);
+    public List<Race> findByOrganizer(Long organizerUserId) {
+        return raceRepository.findByOrganizer_IdOrderByDateDesc(organizerUserId);
     }
 
     /* ===== NUEVO: GET/PUT organizer de una carrera ===== */
 
     public OrganizerDto getOrganizerOfRace(Long raceId) {
-        Career c = careerRepository.findByIdWithOrganizer(raceId)
-                .orElseThrow(() -> new RuntimeException("Career not found"));
+        Race c = raceRepository.findByIdWithOrganizer(raceId)
+                .orElseThrow(() -> new RuntimeException("Race not found"));
         if (c.getOrganizer() == null) return null;
         var u = c.getOrganizer();
         return new OrganizerDto(u.getUID(), u.getName(), u.getEmail());
@@ -111,8 +111,8 @@ public class CareerService {
         if (organizerEmail == null || organizerEmail.isBlank()) {
             throw new RuntimeException("Email is required");
         }
-        Career c = careerRepository.findById(raceId)
-                .orElseThrow(() -> new RuntimeException("Career not found"));
+        Race c = raceRepository.findById(raceId)
+                .orElseThrow(() -> new RuntimeException("Race not found"));
 
         var u = userRepository.findByEmail(organizerEmail)
                 .orElseThrow(() -> new RuntimeException("User not found by email"));
@@ -124,7 +124,7 @@ public class CareerService {
         }
 
         c.setOrganizer(u);
-        careerRepository.save(c);
+        raceRepository.save(c);
         return new OrganizerDto(u.getUID(), u.getName(), u.getEmail());
     }
 }

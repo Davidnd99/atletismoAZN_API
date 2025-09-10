@@ -1,7 +1,7 @@
 package com.running.endpoint.api;
 
 import com.running.model.*;
-import com.running.service.CareerService;
+import com.running.service.RaceService;
 import com.running.service.DifficultyService;
 import com.running.service.ParticipantService;
 import com.running.service.TypeService;
@@ -19,32 +19,32 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/careers")
+@RequestMapping("/api/races")
 @RequiredArgsConstructor
-public class CareerController {
+public class RaceController {
 
-    private final CareerService careerService;
+    private final RaceService raceService;
     private final DifficultyService difficultyService;
     private final TypeService typeService;
     private final ParticipantService participantService;
 
     @PostMapping(value = "/save", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Career> addCareer(@RequestBody CareerDto request) {
-        return ResponseEntity.ok(careerService.save(request));
+    public ResponseEntity<Race> addRace(@RequestBody RaceDto request) {
+        return ResponseEntity.ok(raceService.save(request));
     }
 
     @GetMapping(value = "/getById", produces = "application/json")
-    public ResponseEntity<Career> getById(@RequestParam Long id) {
-        return ResponseEntity.ok(careerService.findById(id));
+    public ResponseEntity<Race> getById(@RequestParam Long id) {
+        return ResponseEntity.ok(raceService.findById(id));
     }
 
     @GetMapping(value = "/getAll", produces = "application/json")
-    public ResponseEntity<List<Career>> getAllCareers() {
-        return ResponseEntity.ok(careerService.findAll());
+    public ResponseEntity<List<Race>> getAllRaces() {
+        return ResponseEntity.ok(raceService.findAll());
     }
 
     @GetMapping(value = "/filter", produces = "application/json")
-    public ResponseEntity<List<Career>> filterCareers(
+    public ResponseEntity<List<Race>> filterRaces(
             @RequestParam(required = false) String province,
             @RequestParam(required = false, name = "fechaDesde") String fechaDesdeStr,
             @RequestParam(required = false, name = "fechaHasta") String fechaHastaStr,
@@ -62,7 +62,7 @@ public class CareerController {
             );
         }
 
-        List<Career> result = careerService.filterCareers(
+        List<Race> result = raceService.filterRaces(
                 province, from, to, typeId, difficultyId, finalizada
         );
         return ResponseEntity.ok(result);
@@ -101,41 +101,41 @@ public class CareerController {
     }
 
     @GetMapping(value = "/getByProvince", produces = "application/json")
-    public ResponseEntity<List<Career>> getByProvince(@RequestParam String province) {
-        return ResponseEntity.ok(careerService.findByProvince(province));
+    public ResponseEntity<List<Race>> getByProvince(@RequestParam String province) {
+        return ResponseEntity.ok(raceService.findByProvince(province));
     }
 
     @GetMapping(value = "/getByType", produces = "application/json")
-    public ResponseEntity<List<Career>> getByType(@RequestParam Long typeId) {
+    public ResponseEntity<List<Race>> getByType(@RequestParam Long typeId) {
         Type type = typeService.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type not found with id: " + typeId));
-        return ResponseEntity.ok(careerService.findByType(type));
+        return ResponseEntity.ok(raceService.findByType(type));
     }
 
     @GetMapping(value = "/getByDifficulty", produces = "application/json")
-    public ResponseEntity<List<Career>> getByDifficulty(@RequestParam Long difficultyId) {
+    public ResponseEntity<List<Race>> getByDifficulty(@RequestParam Long difficultyId) {
         Difficulty difficulty = difficultyService.findById(difficultyId)
                 .orElseThrow(() -> new RuntimeException("Difficulty not found with id: " + difficultyId));
-        return ResponseEntity.ok(careerService.findByDifficulty(difficulty));
+        return ResponseEntity.ok(raceService.findByDifficulty(difficulty));
     }
 
     @GetMapping(value = "/getByOrganizer", produces = "application/json")
-    public ResponseEntity<List<Career>> getByOrganizer(@RequestParam Long organizerUserId) {
-        return ResponseEntity.ok(careerService.findByOrganizer(organizerUserId));
+    public ResponseEntity<List<Race>> getByOrganizer(@RequestParam Long organizerUserId) {
+        return ResponseEntity.ok(raceService.findByOrganizer(organizerUserId));
     }
 
     /* ===== NUEVO: organizer de una carrera ===== */
 
     @GetMapping("/{id}/organizer")
     public ResponseEntity<OrganizerDto> getOrganizer(@PathVariable Long id) {
-        return ResponseEntity.ok(careerService.getOrganizerOfRace(id));
+        return ResponseEntity.ok(raceService.getOrganizerOfRace(id));
     }
 
     @PutMapping("/{id}/organizer")
     public ResponseEntity<OrganizerDto> updateOrganizer(@PathVariable Long id,
                                                         @RequestBody java.util.Map<String, String> body) {
         String email = body.get("email");
-        return ResponseEntity.ok(careerService.updateRaceOrganizer(id, email));
+        return ResponseEntity.ok(raceService.updateRaceOrganizer(id, email));
     }
 
     /** Lista participantes (rol 'user') inscritos en una carrera.

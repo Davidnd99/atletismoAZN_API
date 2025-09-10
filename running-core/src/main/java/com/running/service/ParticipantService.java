@@ -1,9 +1,9 @@
 package com.running.service;
 
-import com.running.model.Career;
+import com.running.model.Race;
 import com.running.model.ParticipantDto;
 import com.running.model.User;
-import com.running.repository.CareerRepository;
+import com.running.repository.RaceRepository;
 import com.running.repository.UserRaceRepository;
 import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class ParticipantService {
 
     private final UserRaceRepository userRaceRepository;
     private final UserRepository userRepository;
-    private final CareerRepository careerRepository;
+    private final RaceRepository raceRepository;
 
     private boolean isAdmin(User u) {
         return userRepository.existsByIdAndRole_Name(u.getId(), "admin")
@@ -37,8 +37,8 @@ public class ParticipantService {
 
     public List<ParticipantDto> listParticipants(String uid, Long raceId, String statusOpt) {
         User caller = getUserByUidOr404(uid);
-        Career race = careerRepository.findById(raceId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Career not found"));
+        Race race = raceRepository.findById(raceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Race not found"));
 
         if (!isAdmin(caller)) {
             if (!isOrganizator(caller) ||

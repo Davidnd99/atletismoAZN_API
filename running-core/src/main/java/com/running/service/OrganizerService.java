@@ -1,7 +1,7 @@
 package com.running.service;
 
 import com.running.model.*;
-import com.running.repository.CareerRepository;
+import com.running.repository.RaceRepository;
 import com.running.repository.DifficultyRepository;
 import com.running.repository.TypeRepository;
 import com.running.repository.UserRepository;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrganizerService {
 
-    private final CareerRepository careerRepository;
+    private final RaceRepository raceRepository;
     private final DifficultyRepository difficultyRepository;
     private final TypeRepository typeRepository;
     private final UserRepository userRepository;
@@ -38,14 +38,14 @@ public class OrganizerService {
     }
 
     /** ADMIN => todas; ORGANIZATOR => las suyas */
-    public List<Career> listMyRaces(String uid) {
+    public List<Race> listMyRaces(String uid) {
         User me = requireAdminOrOrganizator(uid);
-        if (isAdmin(me)) return careerRepository.findAll();
-        return careerRepository.findByOrganizer_UIDOrderByDateDesc(uid);
+        if (isAdmin(me)) return raceRepository.findAll();
+        return raceRepository.findByOrganizer_UIDOrderByDateDesc(uid);
     }
 
     /** Crea carrera; el organizador será el propio caller (admin u organizator). */
-    public Career createAsOrganizer(String uid, CareerDto dto) {
+    public Race createAsOrganizer(String uid, RaceDto dto) {
         User me = requireAdminOrOrganizator(uid);
 
         Difficulty diff = difficultyRepository.findById(dto.getIddifficulty().getIddifficulty())
@@ -53,7 +53,7 @@ public class OrganizerService {
         Type type = typeRepository.findById(dto.getType().getId_type())
                 .orElseThrow(() -> new RuntimeException("Type not found"));
 
-        Career c = Career.builder()
+        Race c = Race.builder()
                 .photo(dto.getPhoto())
                 .name(dto.getName())
                 .place(dto.getPlace())
@@ -68,14 +68,14 @@ public class OrganizerService {
                 .organizer(me)
                 .build();
 
-        return careerRepository.save(c);
+        return raceRepository.save(c);
     }
 
     /** ADMIN => puede editar cualquiera; ORGANIZATOR => solo si es suya. */
-    public Career updateMyRace(String uid, Long raceId, CareerDto dto) {
+    public Race updateMyRace(String uid, Long raceId, RaceDto dto) {
         User me = requireAdminOrOrganizator(uid);
-        Career c = careerRepository.findById(raceId)
-                .orElseThrow(() -> new RuntimeException("Career not found"));
+        Race c = raceRepository.findById(raceId)
+                .orElseThrow(() -> new RuntimeException("Race not found"));
 
         if (!isAdmin(me)) {
             if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(me.getId())) {
@@ -119,28 +119,28 @@ public class OrganizerService {
             }
         }
 
-        return careerRepository.save(c);
+        return raceRepository.save(c);
     }
 
     /** ADMIN => puede borrar cualquiera; ORGANIZATOR => solo si es suya. */
     public void deleteMyRace(String uid, Long raceId) {
         User me = requireAdminOrOrganizator(uid);
-        Career c = careerRepository.findById(raceId)
-                .orElseThrow(() -> new RuntimeException("Career not found"));
+        Race c = raceRepository.findById(raceId)
+                .orElseThrow(() -> new RuntimeException("Race not found"));
 
         if (!isAdmin(me)) {
             if (c.getOrganizer() == null || !c.getOrganizer().getId().equals(me.getId())) {
                 throw new RuntimeException("No puedes gestionar esta carrera");
             }
         }
-        careerRepository.deleteById(raceId);
+        raceRepository.deleteById(raceId);
     }
 
     // === NUEVO: cancelar una inscripción PENDIENTE de un usuario en una carrera ===
     public void cancelPendingRegistration(String organizerUid, Long raceId, String targetUserUid) {
         User organizer = requireAdminOrOrganizator(organizerUid);
-        Career c = careerRepository.findById(raceId)
-                .orElseThrow(() -> new RuntimeException("Career not found"));
+        Race c = raceRepository.findById(raceId)
+                .orElseThrow(() -> new RuntimeException("Race not found"));
 
         // Si no es admin, debe ser el organizador de la carrera
         if (!isAdmin(organizer)) {

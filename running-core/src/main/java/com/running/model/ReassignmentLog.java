@@ -9,7 +9,7 @@ import java.time.Instant;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ReassignmentLog {
 
-    public enum EntityType { CAREER, CLUB }
+    public enum EntityType { RACE, CLUB }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

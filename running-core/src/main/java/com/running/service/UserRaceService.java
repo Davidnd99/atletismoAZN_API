@@ -1,7 +1,7 @@
 package com.running.service;
 
 import com.running.model.*;
-import com.running.repository.CareerRepository;
+import com.running.repository.RaceRepository;
 import com.running.repository.UserRaceRepository;
 import com.running.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.DateTimeException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -25,14 +24,14 @@ public class UserRaceService {
     private static final String CANCELADA  = "cancelada";
 
     private final UserRepository userRepository;
-    private final CareerRepository careerRepository;
+    private final RaceRepository raceRepository;
     private final UserRaceRepository userRaceRepository;
 
     @Transactional
     public void preRegister(String uid, Long raceId) {
         User user = userRepository.findByUID(uid)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        Career race = careerRepository.findById(raceId)
+        Race race = raceRepository.findById(raceId)
                 .orElseThrow(() -> new RuntimeException("Carrera no encontrada"));
 
         Optional<UserRace> existingOpt = userRaceRepository.findByUserIdAndRaceId(user.getId(), raceId);
@@ -78,10 +77,10 @@ public class UserRaceService {
         userRaceRepository.save(ur);
 
         // ++ inscritos
-        Career race = ur.getRace();
+        Race race = ur.getRace();
         int current = race.getRegistered() == null ? 0 : race.getRegistered();
         race.setRegistered(current + 1);
-        careerRepository.save(race);
+        raceRepository.save(race);
     }
 
     @Transactional
@@ -101,10 +100,10 @@ public class UserRaceService {
 
         if (CONFIRMADA.equals(status)) {
             // -- inscritos
-            Career race = ur.getRace();
+            Race race = ur.getRace();
             int current = race.getRegistered() == null ? 0 : race.getRegistered();
             race.setRegistered(Math.max(0, current - 1));
-            careerRepository.save(race);
+            raceRepository.save(race);
         }
 
         // PENDIENTE o CONFIRMADA -> CANCELADA

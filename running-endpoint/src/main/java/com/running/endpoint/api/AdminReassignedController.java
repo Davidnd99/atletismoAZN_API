@@ -1,7 +1,7 @@
 package com.running.endpoint.api;
 
 import com.running.model.ReassignedClubDto;
-import com.running.model.ReassignedCareerDto;
+import com.running.model.ReassignedRaceDto;
 import com.running.service.ReassignmentQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +17,8 @@ public class AdminReassignedController {
     private final ReassignmentQueryService service;
 
     @GetMapping("/{uid}/races")
-    public List<ReassignedCareerDto> getReassignedRaces(@PathVariable String uid) {
-        return service.getReassignedCareersFor(uid);
+    public List<ReassignedRaceDto> getReassignedRaces(@PathVariable String uid) {
+        return service.getReassignedRacesFor(uid);
     }
 
     @GetMapping("/{uid}/clubs")

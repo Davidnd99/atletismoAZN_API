@@ -1,7 +1,7 @@
 package com.running.endpoint.api;
 
-import com.running.model.Career;
-import com.running.model.CareerDto;
+import com.running.model.Race;
+import com.running.model.RaceDto;
 import com.running.service.OrganizerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,19 +23,19 @@ public class OrganizerController {
     private final OrganizerService service;
 
     @GetMapping("/{uid}/races")
-    public ResponseEntity<List<Career>> myRaces(@PathVariable String uid) {
+    public ResponseEntity<List<Race>> myRaces(@PathVariable String uid) {
         return ResponseEntity.ok(service.listMyRaces(uid));
     }
 
     @PostMapping("/{uid}/races")
-    public ResponseEntity<Career> create(@PathVariable String uid, @RequestBody CareerDto body) {
+    public ResponseEntity<Race> create(@PathVariable String uid, @RequestBody RaceDto body) {
         return ResponseEntity.ok(service.createAsOrganizer(uid, body));
     }
 
     @PutMapping("/{uid}/races/{id}")
-    public ResponseEntity<Career> update(@PathVariable String uid,
-                                         @PathVariable Long id,
-                                         @RequestBody CareerDto body) {
+    public ResponseEntity<Race> update(@PathVariable String uid,
+                                       @PathVariable Long id,
+                                       @RequestBody RaceDto body) {
         return ResponseEntity.ok(service.updateMyRace(uid, id, body));
     }
 

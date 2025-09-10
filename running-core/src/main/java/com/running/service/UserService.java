@@ -24,7 +24,7 @@ public class UserService {
     private final ClubRepository clubRepository;
     private final UserRaceRepository userRaceRepository;
     private final RoleRepository roleRepository;
-    private final CareerRepository careerRepository;
+    private final RaceRepository raceRepository;
     private final ReassignmentLogRepository reassignmentLogRepository;
 
     public User saveFromDto(UserDto dto) {
@@ -212,22 +212,22 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User to delete not found"));
 
         // 1) IDs a reasignar
-        List<Long> careerIds = isOrganizator(toDelete)
-                ? careerRepository.findIdsByOrganizer(toDelete) : List.of();
+        List<Long> raceIds = isOrganizator(toDelete)
+                ? raceRepository.findIdsByOrganizer(toDelete) : List.of();
 
         boolean isClubAdmin = userRepository.existsByIdAndRole_Name(toDelete.getId(), "club-administrator");
         List<Long> clubIds = isClubAdmin
                 ? clubRepository.findIdsByManager(toDelete) : List.of();
 
         // 2) Reasignar
-        if (!careerIds.isEmpty()) careerRepository.reassignOrganizer(toDelete, admin);
+        if (!raceIds.isEmpty()) raceRepository.reassignOrganizer(toDelete, admin);
         if (!clubIds.isEmpty())   clubRepository.reassignManager(toDelete, admin);
 
         // 3) Log
-        if (!careerIds.isEmpty()) {
-            var logs = careerIds.stream()
+        if (!raceIds.isEmpty()) {
+            var logs = raceIds.stream()
                     .map(id -> ReassignmentLog.builder()
-                            .entityType(ReassignmentLog.EntityType.CAREER)
+                            .entityType(ReassignmentLog.EntityType.RACE)
                             .entityId(id)
                             .fromUser(toDelete)
                             .toUser(admin)
