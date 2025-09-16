@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -27,7 +26,7 @@ public class UserRace {
     @Id
     @ManyToOne
     @JoinColumn(name = "race_id")
-    private Career race;
+    private Race race;
 
     private LocalDateTime registrationDate;
 

@@ -6,12 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CareerDto {
+public class RaceDto {
     private String photo;
     private String name;
     private String place;
@@ -24,4 +23,5 @@ public class CareerDto {
     private Integer registered;
     @Column(name = "url")
     private String url;
+    private Long organizerUserId;
 }

@@ -33,4 +33,9 @@ public class User {
     )
     @JsonManagedReference
     private List<Club> clubs;
+
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
+
 }

@@ -1,9 +1,6 @@
 package com.running.endpoint.api;
 
-import com.running.model.TrainingPlan;
-import com.running.model.TrainingPlanDto;
-import com.running.model.User;
-import com.running.model.UserDto;
+import com.running.model.*;
 import com.running.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -53,5 +50,51 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable String uid) {
         userService.deleteByUID(uid);
         return ResponseEntity.ok("User deleted successfully");
+    }
+
+    @GetMapping("/role/{uid}")
+    public ResponseEntity<RoleDto> getUserRole(@PathVariable String uid) {
+        RoleDto roleDto = userService.getUserRoleByUID(uid);
+        return ResponseEntity.ok(roleDto);
+    }
+
+    @PutMapping("/update/{uid}")
+    public ResponseEntity<User> updateNameAndSurname(
+            @PathVariable String uid,
+            @RequestBody UserDto dto) {
+        User updatedUser = userService.updateNameAndSurname(uid, dto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/roles/names")
+    public ResponseEntity<List<String>> getAllRoleNames() {
+        List<String> roleNames = userService.getAllRoleNames();
+        return ResponseEntity.ok(roleNames);
+    }
+
+    @PostMapping("/save-admin")
+    public ResponseEntity<User> saveUserFromAdmin(@RequestBody UserDto dto) {
+        User user = userService.saveFromAdminDto(dto);
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/admin-create")
+    public ResponseEntity<User> createUserWithFirebase(@RequestBody UserDto dto) {
+        User user = userService.createUserWithFirebase(dto);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping("/admin-delete/{uid}")
+    public ResponseEntity<String> adminDelete(
+            @PathVariable String uid,
+            @RequestParam("actingUid") String actingUid) {
+        userService.adminDeleteWithFirebase(uid, actingUid);
+        return ResponseEntity.ok("User reassigned (if organizer) and deleted from DB + Firebase");
+    }
+
+
+    @GetMapping("/by-email")
+    public ResponseEntity<UserDto> getByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(userService.findByEmailDto(email));
     }
 }

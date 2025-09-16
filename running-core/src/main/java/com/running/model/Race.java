@@ -1,7 +1,5 @@
 package com.running.model;
 
-import com.running.util.BrandListJsonConverter;
-import com.running.util.StringListJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,16 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
 
 @Entity
-@Table(name = "career")
+@Table(name = "race")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Career {
+public class Race {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,4 +35,7 @@ public class Career {
     @ManyToOne
     @JoinColumn(name = "iddifficulty", nullable = false)
     private Difficulty difficulty;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "organizer_user_id")
+    private User organizer;
 }
