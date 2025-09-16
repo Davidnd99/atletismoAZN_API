@@ -47,8 +47,6 @@ public class ClubController {
         return ResponseEntity.ok(clubService.getManagerOfClub(id));
     }
 
-    // ===== NUEVOS =====
-
     // Actualizar datos del club (nombre, place, province, photo, contact)
     @PutMapping("/{id}")
     public ResponseEntity<ClubDto> updateClub(

@@ -72,7 +72,6 @@ public class RaceController {
     private LocalDateTime parseStart(String s) {
         if (s == null || s.isBlank()) return null;
         String t = s.trim().replace(' ', 'T'); // soporta "YYYY-MM-DD HH:mm:ss"
-        // Solo fecha -> inicio del día
         if (t.length() == 10) {
             LocalDate d = LocalDate.parse(t, DateTimeFormatter.ISO_LOCAL_DATE);
             return d.atStartOfDay();

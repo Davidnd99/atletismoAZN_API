@@ -57,7 +57,6 @@ public class RaceControllerTestApi {
                 .build();
     }
 
-    // Advice de prueba para mapear excepciones a HTTP
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(ResponseStatusException.class)

@@ -53,7 +53,6 @@ public class TrainingPlanControllerTestApi {
                 .build();
     }
 
-    // Mapea ResponseStatusException a su status y RuntimeException a 500
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(ResponseStatusException.class)

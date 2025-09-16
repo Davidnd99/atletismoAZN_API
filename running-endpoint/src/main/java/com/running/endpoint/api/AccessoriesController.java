@@ -27,8 +27,6 @@ public class AccessoriesController {
         return ResponseEntity.ok(service.getAll());
     }
 
-    // === NUEVOS ===
-
     @GetMapping(value = "/getById", produces = "application/json")
     public ResponseEntity<Accessories> getById(@RequestParam Long id) {
         return ResponseEntity.ok(service.getById(id));

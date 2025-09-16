@@ -1,4 +1,3 @@
-// running-endpoint/src/main/java/com/running/endpoint/api/DifficultyController.java
 package com.running.endpoint.api;
 
 import com.running.model.Difficulty;

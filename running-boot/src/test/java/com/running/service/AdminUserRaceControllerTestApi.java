@@ -57,7 +57,6 @@ public class AdminUserRaceControllerTestApi {
                 .build();
     }
 
-    // Advice de prueba para convertir excepciones en respuestas HTTP limpias
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(RuntimeException.class)

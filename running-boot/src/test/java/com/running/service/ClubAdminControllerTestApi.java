@@ -56,7 +56,6 @@ public class ClubAdminControllerTestApi {
                 .build();
     }
 
-    // Advice de prueba: mapea RuntimeException -> 500
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(RuntimeException.class)

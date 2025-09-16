@@ -55,7 +55,6 @@ public class OrganizerControllerTestApi {
                 .build();
     }
 
-    // Advice de prueba: convierte RuntimeException en 500 para poder asertar el código
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(RuntimeException.class)

@@ -50,7 +50,6 @@ public class UserControllerTestApi {
                 .build();
     }
 
-    // Advice de prueba
     @RestControllerAdvice
     static class TestAdvice {
         @ExceptionHandler(ResponseStatusException.class)

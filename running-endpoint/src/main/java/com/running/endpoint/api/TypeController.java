@@ -1,4 +1,3 @@
-// running-endpoint/src/main/java/com/running/endpoint/api/TypeController.java
 package com.running.endpoint.api;
 
 import com.running.model.Type;

@@ -16,14 +16,12 @@ public class UserController {
 
     private final UserService userService;
 
-    // ✅ Endpoint para unirse a un club
     @PutMapping("/{uid}/join-club/{clubId}")
     public ResponseEntity<String> joinClub(@PathVariable String uid, @PathVariable Long clubId) {
         userService.joinClub(uid, clubId);
         return ResponseEntity.ok("User joined the club successfully");
     }
 
-    // ✅ Endpoint para salir de un club
     @PutMapping("/{uid}/leave-club/{clubId}")
     public ResponseEntity<String> leaveClub(@PathVariable String uid, @PathVariable Long clubId) {
         userService.leaveClub(uid, clubId);

@@ -17,7 +17,6 @@ public class TrainingPlanController {
 
     private final TrainingPlanService trainingPlanService;
 
-    // CREATE (ahora requiere uid para control de permisos)
     @PostMapping("/save")
     public ResponseEntity<TrainingPlan> create(@RequestParam String uid, @RequestBody TrainingPlanDto dto) {
         return ResponseEntity.ok(trainingPlanService.save(uid, dto));
@@ -34,8 +33,6 @@ public class TrainingPlanController {
     public ResponseEntity<List<TrainingPlan>> getAll() {
         return ResponseEntity.ok(trainingPlanService.findAll());
     }
-
-    // ====== NUEVOS ======
 
     // READ by id
     @GetMapping("/getById")

@@ -53,7 +53,6 @@ public class TypeControllerTestApi {
                 .build();
     }
 
-    // Advice de prueba: RuntimeException -> 500
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(RuntimeException.class)
@@ -70,7 +69,6 @@ public class TypeControllerTestApi {
         TypeDto dto = new TypeDto();
         dto.setName("Trail");
 
-        // usa builder porque lo usas en el servicio
         Type saved = Type.builder().name("Trail").build();
         when(typeService.save(any(TypeDto.class))).thenReturn(saved);
 

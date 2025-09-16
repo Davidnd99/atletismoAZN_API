@@ -37,8 +37,7 @@ public class Club {
     @JsonBackReference
     private List<User> users;
 
-    // NUEVO: gestor del club (un único user con rol "club-administrator")
-    @ManyToOne(fetch = FetchType.EAGER)        // EAGER para evitar el problema del proxy
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "manager_user_id")
     private User manager;
 }

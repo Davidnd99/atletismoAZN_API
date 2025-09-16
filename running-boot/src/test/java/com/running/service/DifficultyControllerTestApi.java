@@ -36,7 +36,6 @@ public class DifficultyControllerTestApi {
     @Mock
     DifficultyService difficultyService;
 
-    // ⬇️ IMPORTANTE: ahora inyectamos el controlador real
     @InjectMocks
     DifficultyController controller;
 
@@ -53,7 +52,6 @@ public class DifficultyControllerTestApi {
                 .build();
     }
 
-    // Mapea RuntimeException -> 500 para que el test pueda asertar el código
     @RestControllerAdvice
     static class TestGlobalExceptionHandler {
         @ExceptionHandler(RuntimeException.class)
@@ -70,7 +68,6 @@ public class DifficultyControllerTestApi {
         DifficultyDto dto = new DifficultyDto();
         dto.setName("Fácil");
 
-        // ⬇️ OJO: el builder usa el campo 'iddifficulty'
         Difficulty created = Difficulty.builder().iddifficulty(1L).name("Fácil").build();
         when(difficultyService.save(any(DifficultyDto.class))).thenReturn(created);
 
@@ -79,7 +76,6 @@ public class DifficultyControllerTestApi {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                // ⬇️ OJO: el JSON tiene 'iddifficulty', no 'id'
                 .andExpect(jsonPath("$.iddifficulty").value(1))
                 .andExpect(jsonPath("$.name").value("Fácil"));
 
