@@ -66,7 +66,6 @@ public class UserRaceService {
         String status = ur.getStatus() == null ? "" : ur.getStatus().toLowerCase();
 
         if (CONFIRMADA.equals(status)) {
-            // idempotente: ya estaba confirmada
             return;
         }
         if (!PENDIENTE.equals(status)) {
@@ -94,7 +93,6 @@ public class UserRaceService {
         String status = ur.getStatus() == null ? "" : ur.getStatus().toLowerCase();
 
         if (CANCELADA.equals(status)) {
-            // idempotente
             return;
         }
 
@@ -106,7 +104,6 @@ public class UserRaceService {
             raceRepository.save(race);
         }
 
-        // PENDIENTE o CONFIRMADA -> CANCELADA
         ur.setStatus(CANCELADA);
         userRaceRepository.save(ur);
     }

@@ -18,18 +18,13 @@ public interface UserRaceRepository extends JpaRepository<UserRace, UserRaceId> 
     List<UserRace> findByUserIdAndStatus(Long userId, String status);
     Optional<UserRace> findByUser_UIDAndRace_Id(String uid, Long raceId);
 
-    // -------- Listados --------
-    // (si lo sigues usando por UID, puedes dejarlo)
     List<UserRace> findByRace_Organizer_UIDAndStatus(String organizerUid, String status);
 
-    // NUEVO: por id del organizador (recomendado)
     List<UserRace> findByRace_Organizer_IdAndStatus(Long organizerId, String status);
 
     // Pendientes de una carrera concreta
     List<UserRace> findByRace_IdAndStatus(Long raceId, String status);
 
-    // -------- Cancelaciones masivas (ADMIN) --------
-    // ✅ usar organizer.id para evitar problemas con el nombre físico de la columna UID
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
            update UserRace ur

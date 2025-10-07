@@ -22,7 +22,7 @@ public class ReassignmentLog {
     @Column(name = "entity_id", nullable = false)
     private Long entityId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)       // 👈 puede ser NULL tras borrar usuario
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "from_user_id")
     private User fromUser;
 
@@ -31,5 +31,5 @@ public class ReassignmentLog {
     private User toUser;
 
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
-    private Instant createdAt;                                // 👈 usa DEFAULT CURRENT_TIMESTAMP de MySQL
+    private Instant createdAt;
 }

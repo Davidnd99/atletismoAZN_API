@@ -1,12 +1,7 @@
 package com.running.repository;
 
-import com.running.model.Race;
-import com.running.model.Type;
-import com.running.model.Difficulty;
-import com.running.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import com.running.model.*;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -16,6 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface RaceRepository extends JpaRepository<Race, Long> {
+
     List<Race> findByProvince(String province);
     List<Race> findByType(Type type);
     List<Race> findByDifficulty(Difficulty difficulty);
@@ -24,7 +20,10 @@ public interface RaceRepository extends JpaRepository<Race, Long> {
     List<Race> findByOrganizer_UIDOrderByDateDesc(String organizerUid);
     boolean existsByIdAndOrganizer_Id(Long raceId, Long organizerUserId);
 
-    // NUEVO: cargar carrera con organizador (join fetch)
+    Optional<Race> findByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
     @Query("select c from Race c left join fetch c.organizer where c.id = :id")
     Optional<Race> findByIdWithOrganizer(@Param("id") Long id);
 

@@ -30,13 +30,11 @@ public class AdminUserRaceService {
     }
 
     // ✅ Listar inscripciones PENDIENTE de todas las carreras de un organizer (por UID)
-    //    Ahora permite admin O organizator. Si no es ninguno, devuelve lista vacía.
     public List<UserRaceResponseDto> listPendingByOrganizer(String organizerUid) {
         User actor = userRepository.findByUID(organizerUid)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         if (!isOrganizator(actor) && !isAdmin(actor)) {
-            // No es organizator ni admin → no explotes el endpoint
             return List.of();
         }
 
@@ -53,7 +51,6 @@ public class AdminUserRaceService {
     }
 
     // ✅ Cancelar TODAS las PENDIENTE de un organizer (por UID)
-    //    Permite admin O organizator. Si no es ninguno, no hace nada (0).
     @Transactional
     public int cancelAllPendingByOrganizer(String organizerUid) {
         User actor = userRepository.findByUID(organizerUid)

@@ -1,13 +1,13 @@
 package com.running.service;
 
 import com.running.model.*;
-import com.running.repository.RaceRepository;
-import com.running.repository.DifficultyRepository;
-import com.running.repository.TypeRepository;
-import com.running.repository.UserRepository;
+import com.running.repository.*;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,24 +19,31 @@ public class RaceService {
     private final RaceRepository raceRepository;
     private final DifficultyRepository difficultyRepository;
     private final TypeRepository typeRepository;
-    private final UserRepository userRepository; // <-- lo puedes mantener si lo usas en otros métodos
-
+    private final UserRepository userRepository;
 
     private boolean isAdmin(User u) {
         return userRepository.existsByIdAndRole_Name(u.getId(), "admin");
     }
 
-
+    @Transactional
     public Race save(RaceDto request) {
+        String name = request.getName() == null ? null : request.getName().trim();
+        if (name == null || name.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre de la carrera es obligatorio");
+        }
+        if (raceRepository.existsByNameIgnoreCase(name)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una carrera con ese nombre");
+        }
+
         Difficulty difficulty = difficultyRepository.findById(request.getIddifficulty().getIddifficulty())
-                .orElseThrow(() -> new RuntimeException("Difficulty not found with id: " + request.getIddifficulty().getIddifficulty()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Difficulty not found with id: " + request.getIddifficulty().getIddifficulty()));
 
         Type type = typeRepository.findById(request.getType().getId_type())
-                .orElseThrow(() -> new RuntimeException("Type not found with id: " + request.getType().getId_type()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Type not found with id: " + request.getType().getId_type()));
 
         Race race = Race.builder()
                 .photo(request.getPhoto())
-                .name(request.getName())
+                .name(name)
                 .place(request.getPlace())
                 .distance_km(request.getDistance_km())
                 .date(request.getDate())
@@ -48,8 +55,11 @@ public class RaceService {
                 .registered(request.getRegistered())
                 .build();
 
-        // 👇 Sin asignación de organizer aquí
-        return raceRepository.save(race);
+        try {
+            return raceRepository.save(race);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una carrera con ese nombre", e);
+        }
     }
 
     public List<Race> filterRaces(
@@ -67,7 +77,7 @@ public class RaceService {
                 fechaDesde,
                 fechaHasta,
                 finalizada,
-                LocalDateTime.now()  // comparación con "ahora" para finalizada
+                LocalDateTime.now()
         );
     }
 
@@ -81,26 +91,20 @@ public class RaceService {
 
     public Race findById(Long id) {
         return raceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Race not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Race not found with id: " + id));
     }
 
     public List<Race> findAll() { return raceRepository.findAll(); }
-
     public List<Race> findByProvince(String province) { return raceRepository.findByProvince(province); }
-
     public List<Race> findByType(Type type) { return raceRepository.findByType(type); }
-
     public List<Race> findByDifficulty(Difficulty difficulty) { return raceRepository.findByDifficulty(difficulty); }
-
     public List<Race> findByOrganizer(Long organizerUserId) {
         return raceRepository.findByOrganizer_IdOrderByDateDesc(organizerUserId);
     }
 
-    /* ===== NUEVO: GET/PUT organizer de una carrera ===== */
-
     public OrganizerDto getOrganizerOfRace(Long raceId) {
         Race c = raceRepository.findByIdWithOrganizer(raceId)
-                .orElseThrow(() -> new RuntimeException("Race not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Race not found"));
         if (c.getOrganizer() == null) return null;
         var u = c.getOrganizer();
         return new OrganizerDto(u.getUID(), u.getName(), u.getEmail());
@@ -109,18 +113,17 @@ public class RaceService {
     @Transactional
     public OrganizerDto updateRaceOrganizer(Long raceId, String organizerEmail) {
         if (organizerEmail == null || organizerEmail.isBlank()) {
-            throw new RuntimeException("Email is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
         }
         Race c = raceRepository.findById(raceId)
-                .orElseThrow(() -> new RuntimeException("Race not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Race not found"));
 
         var u = userRepository.findByEmail(organizerEmail)
-                .orElseThrow(() -> new RuntimeException("User not found by email"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found by email"));
 
-        // ✅ ACEPTA organizator O admin
         boolean isOrganizator = userRepository.existsByIdAndRole_Name(u.getId(), "organizator");
         if (!isOrganizator && !isAdmin(u)) {
-            throw new RuntimeException("El usuario debe ser 'organizator' o 'admin'");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario debe ser 'organizator' o 'admin'");
         }
 
         c.setOrganizer(u);

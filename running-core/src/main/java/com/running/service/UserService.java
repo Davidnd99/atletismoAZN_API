@@ -32,7 +32,7 @@ public class UserService {
 
         if (existingUserOpt.isPresent()) {
             User user = existingUserOpt.get();
-            user.setUID(dto.getUid()); // siempre actualiza UID
+            user.setUID(dto.getUid());
             return userRepository.save(user);
         }
 
@@ -55,8 +55,6 @@ public class UserService {
         User user = userRepository.findByUID(uid)
                 .orElseThrow(() -> new RuntimeException("User not found with UID: " + uid));
 
-        // ❌ ANTES: user.getClubs().clear();  (provocaba LazyInitialization)
-        // ✅ AHORA: romper relaciones vía tabla puente y actualizar contador
         detachUserFromAllClubs(user);
 
         // Eliminar inscripciones del usuario en carreras
@@ -83,7 +81,6 @@ public class UserService {
         Club newClub = clubRepository.findById(newClubId)
                 .orElseThrow(() -> new RuntimeException("Club not found"));
 
-        // quitar default si está
         user.getClubs().removeIf(club -> club.getId() == 1L);
 
         if (!user.getClubs().contains(newClub)) {
@@ -247,7 +244,6 @@ public class UserService {
             reassignmentLogRepository.saveAll(logs);
         }
 
-        // 4) romper membresías sin tocar colección lazy + borrar inscripciones + borrar usuario
         detachUserFromAllClubs(toDelete);
         userRaceRepository.deleteAll(userRaceRepository.findByUser_UID(toDelete.getUID()));
         userRepository.delete(toDelete);
@@ -257,13 +253,12 @@ public class UserService {
 
     /** Rompe todas las membresías del usuario vía tabla puente y ajusta el contador de members. */
     private void detachUserFromAllClubs(User user) {
-        // IDs de clubs antes de borrar filas de user_club (para actualizar contador)
         List<Long> clubIds = userRepository.findClubIdsByUserId(user.getId());
 
         // borrar filas en user_club
         userRepository.deleteAllClubsByUserId(user.getId());
 
-        // actualizar contador members si procede
+        // actualizar contador members
         if (clubIds != null && !clubIds.isEmpty()) {
             for (Long cid : clubIds) {
                 clubRepository.decrementMembers(cid);

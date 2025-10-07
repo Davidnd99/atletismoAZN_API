@@ -6,7 +6,11 @@ import com.running.model.User;
 import com.running.repository.ClubRepository;
 import com.running.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -23,10 +27,10 @@ public class ClubAdminService {
 
     private User requireClubAdminByUid(String uid) {
         User u = userRepository.findByUID(uid)
-                .orElseThrow(() -> new RuntimeException("User not found by uid"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found by uid"));
         boolean ok = isAdmin(u) || userRepository.existsByIdAndRole_Name(u.getId(), "club-administrator");
         if (!ok) {
-            throw new RuntimeException("User is not admin nor club-administrator");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not admin nor club-administrator");
         }
         return u;
     }
@@ -40,22 +44,30 @@ public class ClubAdminService {
                 .place(c.getPlace())
                 .members(c.getMembers())
                 .contact(c.getContact())
-                .joined(joinedFlag) // en admin normalmente false; lo dejamos por compatibilidad
+                .joined(joinedFlag)
                 .build();
     }
 
-    // Listar clubs del admin
+    @Transactional(readOnly = true)
     public List<ClubDto> listMyClubs(String managerUid) {
         return clubRepository.findByManager_UIDOrderByNameAsc(managerUid)
                 .stream().map(c -> toDto(c, false)).toList();
     }
 
-    // Crear club y asignar manager
+    @Transactional
     public ClubDto createAsManager(String managerUid, ClubDto dto) {
         User me = requireClubAdminByUid(managerUid);
 
+        String name = dto.getName() != null ? dto.getName().trim() : null;
+        if (name == null || name.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre del club es obligatorio");
+        }
+        if (clubRepository.existsByNameIgnoreCase(name)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un club con ese nombre");
+        }
+
         Club c = Club.builder()
-                .name(dto.getName())
+                .name(name)
                 .province(dto.getProvince())
                 .place(dto.getPlace())
                 .photo(dto.getPhoto())
@@ -64,39 +76,55 @@ public class ClubAdminService {
                 .manager(me)
                 .build();
 
-        return toDto(clubRepository.save(c), false);
+        try {
+            return toDto(clubRepository.save(c), false);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un club con ese nombre", e);
+        }
     }
 
-    // Actualizar club del admin
+    @Transactional
     public ClubDto updateMyClub(String managerUid, Long clubId, ClubDto dto) {
         User me = requireClubAdminByUid(managerUid);
         Club c = clubRepository.findById(clubId)
-                .orElseThrow(() -> new RuntimeException("Club not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found"));
 
         if (c.getManager() == null || !c.getManager().getId().equals(me.getId())) {
-            throw new RuntimeException("No puedes gestionar este club");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes gestionar este club");
         }
 
-        if (dto.getName() != null) c.setName(dto.getName());
+        if (dto.getName() != null) {
+            String newName = dto.getName().trim();
+            if (!newName.equalsIgnoreCase(c.getName())) {
+                if (clubRepository.existsByNameIgnoreCaseAndIdNot(newName, c.getId())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un club con ese nombre");
+                }
+                c.setName(newName);
+            }
+        }
+
         if (dto.getProvince() != null) c.setProvince(dto.getProvince());
         if (dto.getPlace() != null) c.setPlace(dto.getPlace());
         if (dto.getPhoto() != null) c.setPhoto(dto.getPhoto());
         if (dto.getMembers() != null) c.setMembers(dto.getMembers());
         if (dto.getContact() != null) c.setContact(dto.getContact());
 
-        return toDto(clubRepository.save(c), false);
+        try {
+            return toDto(clubRepository.save(c), false);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un club con ese nombre", e);
+        }
     }
 
-    // Borrar club del admin
+    @Transactional
     public void deleteMyClub(String managerUid, Long clubId) {
         User me = requireClubAdminByUid(managerUid);
         Club c = clubRepository.findById(clubId)
-                .orElseThrow(() -> new RuntimeException("Club not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found"));
 
         if (c.getManager() == null || !c.getManager().getId().equals(me.getId())) {
-            throw new RuntimeException("No puedes borrar este club");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes borrar este club");
         }
         clubRepository.deleteById(clubId);
     }
 }
-

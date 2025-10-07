@@ -68,7 +68,7 @@ public class RaceController {
         return ResponseEntity.ok(result);
     }
 
-    // ---- Helpers de parseo tolerantes a formatos típicos ----
+    // ---- Helpers a formatos típicos ----
     private LocalDateTime parseStart(String s) {
         if (s == null || s.isBlank()) return null;
         String t = s.trim().replace(' ', 'T'); // soporta "YYYY-MM-DD HH:mm:ss"
@@ -89,7 +89,7 @@ public class RaceController {
         String t = s.trim().replace(' ', 'T');
         if (t.length() == 10) {
             LocalDate d = LocalDate.parse(t, DateTimeFormatter.ISO_LOCAL_DATE);
-            return d.atTime(23, 59, 59); // fin de día inclusivo
+            return d.atTime(23, 59, 59);
         }
         try {
             return LocalDateTime.parse(t, DateTimeFormatter.ISO_LOCAL_DATE_TIME);

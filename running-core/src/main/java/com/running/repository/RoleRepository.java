@@ -1,4 +1,3 @@
-// src/main/java/com/running/repository/RoleRepository.java
 package com.running.repository;
 
 import com.running.model.Role;

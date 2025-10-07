@@ -25,7 +25,6 @@ public class ReassignmentQueryService {
     public List<ReassignedRaceDto> getReassignedRacesFor(String uid) {
         var logs = logRepo.findByToUser_UIDAndEntityTypeOrderByCreatedAtDesc(uid, EntityType.RACE);
 
-        // último log por carrera (si hubo varias reasignaciones)
         Map<Long, ReassignmentLog> latestByRace = new LinkedHashMap<>();
         for (var log : logs) latestByRace.putIfAbsent(log.getEntityId(), log);
 
@@ -42,7 +41,7 @@ public class ReassignmentQueryService {
             if (c != null && l != null) {
                 String fromEmail = (l.getFromUser() != null)
                         ? l.getFromUser().getEmail()
-                        : "usuario borrado"; // 👈 evita NPE si el usuario origen ya no existe
+                        : "usuario borrado";
 
                 out.add(ReassignedRaceDto.builder()
                         .id(c.getId())
@@ -79,7 +78,7 @@ public class ReassignmentQueryService {
             if (c != null && l != null) {
                 String fromEmail = (l.getFromUser() != null)
                         ? l.getFromUser().getEmail()
-                        : "usuario borrado"; // 👈 evita NPE
+                        : "usuario borrado";
 
                 out.add(ReassignedClubDto.builder()
                         .id(c.getId())

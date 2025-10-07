@@ -16,16 +16,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     boolean existsByIdAndRole_Name(Long id, String roleName);
     List<User> findByClubs_Id(Long clubId);
-    // Buscar un usuario por primer rol disponible (para “fallback”)
+    // Buscar un usuario por primer rol disponible
     Optional<User> findFirstByRole_NameOrderByIdAsc(String roleName);
     @Query("select u from User u left join fetch u.clubs where u.UID = :uid")
     Optional<User> findByUIDWithClubs(@Param("uid") String uid);
 
-    // Para ajustar el contador si lo necesitas (ids de clubs del usuario)
     @Query(value = "SELECT club_id FROM user_club WHERE user_id = :userId", nativeQuery = true)
     List<Long> findClubIdsByUserId(@Param("userId") Long userId);
 
-    // Borra todas las membresías del usuario en la tabla puente
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "DELETE FROM user_club WHERE user_id = :userId", nativeQuery = true)
     void deleteAllClubsByUserId(@Param("userId") Long userId);

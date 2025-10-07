@@ -10,4 +10,7 @@ import java.util.List;
 @Repository
 public interface TrainingPlanRepository extends JpaRepository<TrainingPlan, Long> {
     List<TrainingPlan> findByClub(Club club);
+
+    boolean existsByClub_IdAndNameIgnoreCase(Long clubId, String name);
+    boolean existsByClub_IdAndNameIgnoreCaseAndIdNot(Long clubId, String name, Long id);
 }

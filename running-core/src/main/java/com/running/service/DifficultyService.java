@@ -1,4 +1,3 @@
-// running-core/src/main/java/com/running/service/DifficultyService.java
 package com.running.service;
 
 import com.running.model.Difficulty;

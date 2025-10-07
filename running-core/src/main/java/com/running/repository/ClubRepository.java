@@ -15,13 +15,17 @@ import java.util.Optional;
 public interface ClubRepository extends JpaRepository<Club, Long> {
 
     List<Club> findByProvinceIgnoreCaseAndNameNotIgnoreCase(String province, String excludedName);
-
     List<Club> findByNameNotIgnoreCase(String excludedName);
 
-    // NUEVOS (gestión)
-    List<Club> findByManager_UIDOrderByNameAsc(String managerUid);   // por UID Firebase
+    Optional<Club> findByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
+    List<Club> findByManager_UIDOrderByNameAsc(String managerUid);
+
     @Query("select c from Club c left join fetch c.manager where c.id = :id")
-    java.util.Optional<Club> findByIdWithManager(@Param("id") Long id);
+    Optional<Club> findByIdWithManager(@Param("id") Long id);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Club c SET c.manager = :newManager WHERE c.manager = :oldManager")
